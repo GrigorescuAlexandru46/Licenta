@@ -20,9 +20,11 @@ namespace Licenta.Models
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext()
-            : base("DefaultConnection", throwIfV1Schema: false)
+        public DbSet<Profile> Profiles { get; set; }
+
+        public ApplicationDbContext(): base("DefaultConnection", throwIfV1Schema: false)
         {
+
         }
 
         public static ApplicationDbContext Create()

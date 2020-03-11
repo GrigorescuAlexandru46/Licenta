@@ -151,11 +151,22 @@ namespace Licenta.Controllers
         {
             if (ModelState.IsValid)
             {
+                ApplicationDbContext db = new ApplicationDbContext();
+
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+
+                var profile = new Profile();
+                profile.Name = model.Name;
+                profile.Email = model.Email;
+                profile.Description = "This profile does not have a description";
+                db.Profiles.Add(profile);
+                db.SaveChanges();
+
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
+                    // Don't log in after register (avoid bug)
+                    // await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
                     
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
