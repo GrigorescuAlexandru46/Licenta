@@ -20,7 +20,6 @@ namespace Licenta
             BundleConfig.RegisterBundles(BundleTable.Bundles);
 
             Database.SetInitializer<ApplicationDbContext>(new DropCreateDatabaseIfModelChanges<ApplicationDbContext>());
-            Database.SetInitializer<ProfileDBContext>(new DropCreateDatabaseIfModelChanges<ProfileDBContext>());
         }
     }
 }

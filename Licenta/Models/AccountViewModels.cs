@@ -81,8 +81,14 @@ namespace Licenta.Models
         public string ConfirmPassword { get; set; }
 
         [Required]
-        [StringLength(30, ErrorMessage = "The {0} must have between {2} and {1} characters .", MinimumLength = 2)]
-        public string Name { get; set; }
+        [StringLength(20, ErrorMessage = "The {0} must have between {2} and {1} characters.", MinimumLength = 2)]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; }
+
+        [Required]
+        [StringLength(20, ErrorMessage = "The {0} must have between {2} and {1} characters.", MinimumLength = 2)]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; }
     }
 
     public class ResetPasswordViewModel

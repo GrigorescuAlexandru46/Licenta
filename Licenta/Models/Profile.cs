@@ -12,25 +12,26 @@ namespace Licenta.Models
         [Key]
         public int ProfileId { get; set; }
 
+        public string UserId { get; set; }
+
+        
+
         [Required]
-        [StringLength(30, ErrorMessage = "The {0} must have between {2} and {1} characters .", MinimumLength = 2)]
-        public string Name { get; set; }
+        [StringLength(20, ErrorMessage = "The {0} must have between {2} and {1} characters.", MinimumLength = 2)]
+        public string FirstName { get; set; }
+
+        [Required]
+        [StringLength(20, ErrorMessage = "The {0} must have between {2} and {1} characters.", MinimumLength = 2)]
+        public string LastName { get; set; }
 
         [Required]
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; }
 
-        [Required]
-        [MinLength(3)]
         public string Description { get; set; }
-
-
-    }
-
-    public class ProfileDBContext : DbContext
-    {
-        public ProfileDBContext() : base("DefaultConnection") { }
-        public DbSet<Profile> Profiles { get; set; }
+        
+        
+        public int Age { get; set; }
     }
 }

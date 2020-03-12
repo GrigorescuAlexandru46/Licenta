@@ -1,0 +1,39 @@
+﻿@model Licenta.Models.Profile
+@{
+    ViewBag.Title = "Profile details";
+}
+
+<h2>@ViewBag.Title.</h2>
+
+
+<h4>Profile details</h4>
+<hr />
+
+<div class="panel panel-primary">
+    <div class="panel-heading">Profile details</div>
+
+    <div class="panel-body">
+        <div class="panel panel-default">
+            <div class="panel-heading">First Name</div>
+            <div class="panel-body">@Model.FirstName</div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Last Name</div>
+            <div class="panel-body">@Model.LastName</div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Age</div>
+            <div class="panel-body">@Model.Age</div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Description</div>
+            <div class="panel-body">@Model.Description</div>
+        </div>
+    </div>
+
+</div>
+
+

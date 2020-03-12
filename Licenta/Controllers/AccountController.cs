@@ -9,6 +9,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Licenta.Models;
+using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace Licenta.Controllers
 {
@@ -156,25 +157,22 @@ namespace Licenta.Controllers
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
 
                 var profile = new Profile();
-                profile.Name = model.Name;
+                profile.UserId = user.Id;
+                profile.FirstName = model.FirstName;
+                profile.LastName = model.LastName;
                 profile.Email = model.Email;
-                profile.Description = "This profile does not have a description";
+                profile.Description = "No description";
+                profile.Age = 20;
                 db.Profiles.Add(profile);
                 db.SaveChanges();
 
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    // Don't log in after register (avoid bug)
-                    // await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
-                    // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
-                    // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    var UserManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(db));
+                    UserManager.AddToRole(user.Id, "User");
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Login", "Account");
                 }
                 AddErrors(result);
             }

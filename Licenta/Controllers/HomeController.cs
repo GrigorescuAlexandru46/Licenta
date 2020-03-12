@@ -13,6 +13,7 @@ namespace Licenta.Controllers
             return View();
         }
 
+        [Authorize(Roles = "User, Administrator")]
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";

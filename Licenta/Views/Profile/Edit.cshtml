@@ -1,0 +1,48 @@
+﻿@model Licenta.Models.Profile
+@{
+    ViewBag.Title = "Profile edit";
+}
+
+<h2>@ViewBag.Title</h2>
+<hr/>
+
+@Html.ValidationSummary("", new { @class = "text-danger" })
+
+@using (Html.BeginForm("Edit", "Profile", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+{
+    <fieldset>
+        <div class="form-group">
+            @Html.Label("FirstName", "First Name", new { @class = "col-lg-2 control-label" })
+            <div class="col-lg-10">
+                @Html.TextBox("FirstName", Model.FirstName, new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.Label("LastName", "Last Name", new { @class = "col-lg-2 control-label" })
+            <div class="col-lg-10">
+                @Html.TextBox("LastName", Model.LastName, new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.Label("Age", "Age", new { @class = "col-lg-2 control-label" })
+            <div class="col-lg-10">
+                @Html.TextBox("Age", Model.Age, new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.Label("Description", "Description", new { @class = "col-lg-2 control-label" })
+            <div class="col-lg-10">
+                @Html.TextArea("Description", Model.Description, new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" class="btn btn-default" value="Edit" />
+            </div>
+        </div>
+    </fieldset>
+}
