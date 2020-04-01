@@ -89,6 +89,14 @@ namespace Licenta.Models
         [StringLength(20, ErrorMessage = "The {0} must have between {2} and {1} characters.", MinimumLength = 2)]
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
+
+        [Required]
+        [Display(Name = "Age")]
+        public int Age { get; set; }
+
+        [Required]
+        [Display(Name = "Description")]
+        public string Description { get; set; }
     }
 
     public class ResetPasswordViewModel

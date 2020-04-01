@@ -7,7 +7,7 @@ using System.Web.Mvc;
 
 namespace Licenta.Controllers
 {
-    [Authorize(Roles = "Administrator, User")]
+    //[Authorize(Roles = "Administrator, User")]
     public class ProfileController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
@@ -28,7 +28,7 @@ namespace Licenta.Controllers
             return View(profile);
         }
 
-        [HttpPut]
+        [HttpPost]
         public ActionResult Edit(int id, Profile newProfile)
         {
             try

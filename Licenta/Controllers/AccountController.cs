@@ -161,8 +161,8 @@ namespace Licenta.Controllers
                 profile.FirstName = model.FirstName;
                 profile.LastName = model.LastName;
                 profile.Email = model.Email;
-                profile.Description = "No description";
-                profile.Age = 20;
+                profile.Description = model.Description;
+                profile.Age = model.Age;
                 db.Profiles.Add(profile);
                 db.SaveChanges();
 
