@@ -10,6 +10,11 @@ namespace Licenta.Controllers
     {
         public ActionResult Index()
         {
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
+
             return View();
         }
 

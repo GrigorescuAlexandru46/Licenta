@@ -1,5 +1,7 @@
 ﻿@model Licenta.Models.Profile
 @{
+    /**/
+
     ViewBag.Title = "Profile of " + Model.FirstName;
 }
 
@@ -40,5 +42,27 @@
     </div>
 
 </div>
+
+@if (ViewBag.UserIsProfileOwner || ViewBag.UserIsAdmin)
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
+                @Html.ActionLink("Edit profile", "Edit", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-default" })
+                @if (ViewBag.UserIsProfileOwner)
+                {
+                     @Html.ActionLink("Change your password", "ChangePassword", "Manage", null, new { @class = "btn btn-default" })
+                }
+            </div>
+            
+            <div class="col-md-2">
+                <form action="/profile/delete/@Model.ProfileId" method="post">
+                    @Html.HttpMethodOverride(HttpVerbs.Delete)
+                    <button type="submit" class="btn btn-danger">Delete account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
 
 
