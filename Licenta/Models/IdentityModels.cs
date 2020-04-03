@@ -21,6 +21,9 @@ namespace Licenta.Models
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<Profile> Profiles { get; set; }
+        public DbSet<Poll> Polls { get; set; }
+        public DbSet<Question> Questions { get; set; }
+
 
         public ApplicationDbContext(): base("DefaultConnection", throwIfV1Schema: false)
         {

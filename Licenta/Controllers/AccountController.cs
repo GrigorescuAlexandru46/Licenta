@@ -163,6 +163,8 @@ namespace Licenta.Controllers
                 profile.Email = model.Email;
                 profile.Description = model.Description;
                 profile.Age = model.Age;
+                profile.CreationDate = DateTime.Now;
+                
                 db.Profiles.Add(profile);
                 db.SaveChanges();
 

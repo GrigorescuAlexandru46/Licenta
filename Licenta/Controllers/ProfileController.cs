@@ -24,29 +24,9 @@ namespace Licenta.Controllers
         public ActionResult Show(int id)
         {
             Profile profile = db.Profiles.Find(id);
-            Profile ownProfile = GetOwnProfile();
 
-            // If the user owns the given profile
-            if (ownProfile.ProfileId == id)
-            {
-                ViewBag.UserIsProfileOwner = true;
-            }
-            else
-            {
-                ViewBag.UserIsProfileOwner = false;
-            }
-
-            // If the user is an administrator
-            if (User.IsInRole("Administrator"))
-            {
-                ViewBag.UserIsAdmin = true;
-            }
-            else
-            {
-                ViewBag.UserIsAdmin = false;
-            }
-
-
+            ViewBag.UserIsAdmin = UserIsAdmin();
+            ViewBag.UserIsProfileOwner = UserIsProfileOwner(profile);
 
             return View(profile);
         }
@@ -154,6 +134,30 @@ namespace Licenta.Controllers
 
                 transaction.Commit();
             }
+        }
+
+        public bool UserIsAdmin()
+        {
+            // If the user is an administrator
+            if (User.IsInRole("Administrator"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool UserIsProfileOwner(Profile profileToCheck)
+        {
+            Profile ownProfile = GetOwnProfile();
+
+            // If the user owns the given profile
+            if (ownProfile.ProfileId == profileToCheck.ProfileId)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

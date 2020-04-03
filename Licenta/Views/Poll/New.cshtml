@@ -1,0 +1,30 @@
+﻿@model Licenta.Models.Poll
+@{
+    ViewBag.Title = "Create a new poll";
+}
+
+<h2>@ViewBag.Title</h2>
+<hr />
+
+@Html.ValidationSummary("", new { @class = "text-danger" })
+
+
+@using (Html.BeginForm("New", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+{
+<fieldset>
+    <div class="form-group">
+        @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
+        <div class="col-lg-10">
+            @Html.TextBox("Name", Model.Name, new { @class = "form-control" })
+        </div>
+    </div>
+
+    @Html.Hidden("CreationDate", DateTime.Now)
+
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" class="btn btn-default" value="Create" />
+        </div>
+    </div>
+</fieldset>
+}
