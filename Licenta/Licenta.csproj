@@ -250,6 +250,8 @@
     <Content Include="Views\Poll\Show.cshtml" />
     <Content Include="Views\Poll\Edit.cshtml" />
     <Content Include="Views\Poll\Index.cshtml" />
+    <Content Include="Views\Profile\Index.cshtml" />
+    <Content Include="Views\Profile\ShowPolls.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

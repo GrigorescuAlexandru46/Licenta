@@ -21,8 +21,18 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
-                    <li>@Html.ActionLink("My polls", "Index", "Poll")</li>
-                    <li>@Html.ActionLink("Create poll", "New", "Poll")</li>
+                    <li>@Html.ActionLink("My polls", "ShowOwnPolls", "Profile")</li>
+                    <li>@Html.ActionLink("Create poll", "New", "Poll")</li>   
+                    @if (User.IsInRole("User"))
+                    {
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Admin<span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li>@Html.ActionLink("All profiles", "Index", "Profile")</li>
+                                <li>@Html.ActionLink("All polls", "Index", "Poll")</li>
+                            </ul>
+                        </li>
+                    }
                 </ul>
                 @Html.Partial("_LoginPartial")
             </div>

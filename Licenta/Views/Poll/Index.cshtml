@@ -1,5 +1,5 @@
 ﻿@{
-    ViewBag.Title = "My polls";
+    ViewBag.Title = "List of all polls";
 }
 
 <h2>@ViewBag.Title</h2>
@@ -8,20 +8,18 @@
 
 @if (ViewBag.PollsList.Count == 0)
 {
-    <h3>You currently have no polls</h3>
-    @Html.ActionLink("Create poll", "New", "Poll", null, new { @class = "btn btn-primary" })
+    <h3>There are currently no polls</h3>
 }
 else
 {
     <div class="list-group">
         @foreach (var poll in ViewBag.PollsList)
         {
-            <a href="/Poll/Show/@poll.PollId" class="list-group-item">
-                <label class="badge label label-default">@poll.CreationDate</label>
-                @poll.Name
-            </a>
+        <a href="/Poll/Show/@poll.PollId" class="list-group-item">
+            <div class="badge label label-default">Created at: <br /> @poll.CreationDate</div>
+            <h4>@poll.Name</h4>
+            <h6>Created by: @poll.Profile.FirstName @poll.Profile.LastName</h6>
+        </a>
         }
-        <br/>
-        @Html.ActionLink("Create another poll", "New", "Poll", null, new { @class = "btn btn-default" })
     </div>
 }

@@ -1,0 +1,43 @@
+﻿@if (ViewBag.UserIsProfileOwner)
+{
+    ViewBag.Title = "My polls";
+}
+else
+{
+    ViewBag.Title = "Polls of " + ViewBag.Profile.FirstName + " " + ViewBag.Profile.LastName;
+}
+
+<h2>@ViewBag.Title</h2>
+<hr />
+
+@if (ViewBag.PollsList.Count == 0)
+{
+    if (ViewBag.UserIsProfileOwner)
+    {
+        <h3>You currently have no polls</h3>
+    }
+    else
+    {
+        <h3>@ViewBag.Profile.FirstName @ViewBag.Profile.LastName has no polls</h3>
+    }
+}
+else
+{
+    <div class="list-group">
+        @foreach (var poll in ViewBag.PollsList)
+        {
+            <a href="/Poll/Show/@poll.PollId" class="list-group-item">
+                <div class="badge label label-default">
+                    Created at: <br /> @poll.CreationDate
+                </div>
+                <h4>@poll.Name</h4>
+            </a>
+        }
+        <br />
+    </div>
+}
+
+@if (ViewBag.UserIsProfileOwner)
+{
+    @Html.ActionLink("Create poll", "New", "Poll", null, new { @class = "btn btn-primary" })
+}

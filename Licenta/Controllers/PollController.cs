@@ -12,14 +12,10 @@ namespace Licenta.Controllers
     public class PollController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
-
+        
         public ActionResult Index()
         {
-            Profile ownProfile = GetOwnProfile();
-
-
             var pollsList = (from poll in db.Polls
-                             where poll.OwnerId == ownProfile.ProfileId
                              select poll
                             ).ToList();
 

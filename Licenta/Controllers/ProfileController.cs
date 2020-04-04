@@ -19,6 +19,11 @@ namespace Licenta.Controllers
 
         public ActionResult Index()
         {
+            var profilesList = (from profile in db.Profiles
+                                select profile
+                               ).ToList();
+
+            ViewBag.ProfilesList = profilesList;
             return View();
         }
         public ActionResult Show(int id)
@@ -36,6 +41,29 @@ namespace Licenta.Controllers
             Profile ownProfile = GetOwnProfile();
 
             return RedirectToAction("Show", "Profile", new { id = ownProfile.ProfileId });  
+        }
+
+        public ActionResult ShowPolls(int id)
+        {
+            Profile profile = db.Profiles.Find(id);
+
+            var pollsList = (from poll in db.Polls
+                             where poll.OwnerId == profile.ProfileId
+                             select poll
+                            ).ToList();
+
+            ViewBag.UserIsProfileOwner = UserIsProfileOwner(profile);
+            ViewBag.UserIsAdmin = UserIsAdmin();
+            ViewBag.PollsList = pollsList;
+            ViewBag.Profile = profile;
+            return View();
+        }
+
+        public ActionResult ShowOwnPolls()
+        {
+            Profile ownProfile = GetOwnProfile();
+
+            return RedirectToAction("ShowPolls", new { id = ownProfile.ProfileId });
         }
 
         [NonAction]

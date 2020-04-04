@@ -10,7 +10,7 @@
 <hr />
 
 <div class="panel panel-primary">
-    <div class="panel-heading">Personal details</div>
+    <div class="panel-heading">Details</div>
 
     <div class="panel-body">
         <div class="container">
@@ -29,6 +29,16 @@
             <div class="row">
                 <label class="col-lg-2 control-label">Profile creation date :</label>
                 <label class="col-lg-8 control-label">@Model.CreationDate</label>
+            </div>
+            <div class="row">
+                <label class="col-lg-2 control-label">Polls created : </label>
+                <label class="col-lg-2 control-label">@Model.Polls.Count</label>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-lg-2 control-label">
+                    @Html.ActionLink("View the polls of this user", "ShowPolls", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-default" })
+                </div>
             </div>
         </div>
     </div>
