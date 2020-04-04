@@ -7,6 +7,14 @@ else
     ViewBag.Title = "Polls of " + ViewBag.Profile.FirstName + " " + ViewBag.Profile.LastName;
 }
 
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
+
 <h2>@ViewBag.Title</h2>
 <hr />
 

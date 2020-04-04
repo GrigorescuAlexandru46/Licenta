@@ -252,6 +252,7 @@
     <Content Include="Views\Poll\Index.cshtml" />
     <Content Include="Views\Profile\Index.cshtml" />
     <Content Include="Views\Profile\ShowPolls.cshtml" />
+    <Content Include="Views\Profile\ConfirmDelete.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

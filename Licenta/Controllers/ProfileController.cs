@@ -24,6 +24,11 @@ namespace Licenta.Controllers
                                ).ToList();
 
             ViewBag.ProfilesList = profilesList;
+
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
             return View();
         }
         public ActionResult Show(int id)
@@ -33,6 +38,10 @@ namespace Licenta.Controllers
             ViewBag.UserIsAdmin = UserIsAdmin();
             ViewBag.UserIsProfileOwner = UserIsProfileOwner(profile);
 
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
             return View(profile);
         }
 
@@ -40,6 +49,11 @@ namespace Licenta.Controllers
         {
             Profile ownProfile = GetOwnProfile();
 
+
+            if (TempData.ContainsKey("Message"))
+            {
+                TempData["Message"] = TempData["Message"];
+            }
             return RedirectToAction("Show", "Profile", new { id = ownProfile.ProfileId });  
         }
 
@@ -56,6 +70,11 @@ namespace Licenta.Controllers
             ViewBag.UserIsAdmin = UserIsAdmin();
             ViewBag.PollsList = pollsList;
             ViewBag.Profile = profile;
+
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
             return View();
         }
 
@@ -64,20 +83,6 @@ namespace Licenta.Controllers
             Profile ownProfile = GetOwnProfile();
 
             return RedirectToAction("ShowPolls", new { id = ownProfile.ProfileId });
-        }
-
-        [NonAction]
-        public Profile GetOwnProfile()
-        {
-            string ownUserId = User.Identity.GetUserId();
-
-            var queryProfiles = from profile in db.Profiles
-                                where profile.UserId == ownUserId
-                                select profile;
-
-            Profile ownProfile = queryProfiles.FirstOrDefault();
-
-            return ownProfile;
         }
 
         public ActionResult Edit(int id)
@@ -101,6 +106,8 @@ namespace Licenta.Controllers
                     
                     db.SaveChanges();
                 }
+
+                TempData["Message"] = "Profile successfully edited!";
                 return RedirectToAction("Show", "Profile", new { id = newProfile.ProfileId });
             }
             catch (Exception e)
@@ -114,8 +121,7 @@ namespace Licenta.Controllers
         public async Task<ActionResult> Delete(int id)
         {
             Profile profile = db.Profiles.Find(id);
-            TempData["Message"] = "The account of " + profile.FirstName + " " + profile.LastName + " has been deleted";
-
+        
             await DeleteUser(profile.UserId);
 
             db.Profiles.Remove(profile);
@@ -123,9 +129,16 @@ namespace Licenta.Controllers
 
             var accountController = new AccountController();
             accountController.ControllerContext = ControllerContext;
-            return accountController.LogOff();
 
-            //return RedirectToAction("LogOff", "Account");
+            TempData["Message"] = "Profile successfully deleted!";
+            return accountController.LogOff();
+        }
+
+        public ActionResult ConfirmDelete(int id)
+        {
+            Profile profile = db.Profiles.Find(id);
+
+            return View(profile);
         }
 
         public async Task DeleteUser(string userId)
@@ -164,6 +177,21 @@ namespace Licenta.Controllers
             }
         }
 
+        [NonAction]
+        public Profile GetOwnProfile()
+        {
+            string ownUserId = User.Identity.GetUserId();
+
+            var queryProfiles = from profile in db.Profiles
+                                where profile.UserId == ownUserId
+                                select profile;
+
+            Profile ownProfile = queryProfiles.FirstOrDefault();
+
+            return ownProfile;
+        }
+
+        [NonAction]
         public bool UserIsAdmin()
         {
             // If the user is an administrator
@@ -175,6 +203,7 @@ namespace Licenta.Controllers
             return false;
         }
 
+        [NonAction]
         public bool UserIsProfileOwner(Profile profileToCheck)
         {
             Profile ownProfile = GetOwnProfile();

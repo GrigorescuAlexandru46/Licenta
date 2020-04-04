@@ -3,22 +3,29 @@
     ViewBag.Title = "List of all profiles";
 }
 
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
+
 <h2>@ViewBag.Title</h2>
 <hr />
-
 
 <div class="list-group">
     @foreach (var profile in ViewBag.ProfilesList)
     {
-    <a href="/Profile/Show/@profile.ProfileId" class="list-group-item">
-        <label class="badge label label-default">
-            Created at:
-            <br/>
-            @profile.CreationDate
-        </label>
-        <h4>@profile.FirstName @profile.LastName</h4>
-        <p>@profile.Email</p>
-    </a>
+        <a href="/Profile/Show/@profile.ProfileId" class="list-group-item">
+            <label class="badge label label-default">
+                Created at:
+                <br />
+                @profile.CreationDate
+            </label>
+            <h4>@profile.FirstName @profile.LastName</h4>
+            <p>@profile.Email</p>
+        </a>
     }
 </div>
 

@@ -4,9 +4,15 @@
     ViewBag.Title = Model.Name;
 }
 
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
+
 <h1>@ViewBag.Title</h1>
-
-
 <hr />
 
 <div class="panel panel-primary">
@@ -34,7 +40,7 @@
                 <label class="col-lg-2 control-label">Poll creation date :</label>
                 <label class="col-lg-2 control-label">@Model.CreationDate</label>
             </div>
-            <br/>
+            <br />
             <div class="row">
                 <div class="col-lg-2 control-label">
                     @Html.ActionLink("Go to creator profile", "Show", "Profile", new { id = Model.Profile.ProfileId }, new { @class = "btn btn-default" })
@@ -50,11 +56,10 @@
     <div class="container">
         <div class="row">
             <div class="col-md-10">
-                @Html.ActionLink("Edit poll", "Edit", "Poll", new { id = Model.PollId }, new { @class = "btn btn-default" })
+                @Html.ActionLink("Edit poll", "Edit", "Poll", new { id = Model.PollId }, new { @class = "btn btn-info" })
             </div>
-
             <div class="col-md-2">
-                <form action="/profile/delete/@Model.PollId" method="post">
+                <form action="/poll/delete/@Model.PollId" method="post">
                     @Html.HttpMethodOverride(HttpVerbs.Delete)
                     <button type="submit" class="btn btn-danger">Delete poll</button>
                 </form>

@@ -20,19 +20,26 @@ namespace Licenta.Controllers
                             ).ToList();
 
             ViewBag.PollsList = pollsList;
+
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
             return View();
         }
 
         public ActionResult Show(int id)
         {
-            var profileController = new ProfileController();
-            profileController.ControllerContext = ControllerContext;
-
             Poll poll = db.Polls.Find(id);
 
-            ViewBag.UserIsAdmin = profileController.UserIsAdmin();
-            ViewBag.UserIsProfileOwner = profileController.UserIsProfileOwner(poll.Profile);
+            ViewBag.UserIsAdmin = UserIsAdmin();
+            ViewBag.UserIsProfileOwner = UserIsProfileOwner(poll.Profile);
 
+
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
             return View(poll);
         }
 
@@ -54,6 +61,8 @@ namespace Licenta.Controllers
 
                 db.Polls.Add(poll);
                 db.SaveChanges();
+
+                TempData["Message"] = "Poll successfully created!";
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception e)
@@ -81,6 +90,8 @@ namespace Licenta.Controllers
 
                     db.SaveChanges();
                 }
+
+                TempData["Message"] = "Poll successfully edited!";
                 return RedirectToAction("Show", "Poll", new { id = newPoll.PollId });
             }
             catch (Exception e)
@@ -88,6 +99,18 @@ namespace Licenta.Controllers
                 Console.WriteLine(e);
                 return View();
             }
+        }
+
+        [HttpDelete]
+        public ActionResult Delete(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            db.Polls.Remove(poll);
+            db.SaveChanges();
+
+            TempData["Message"] = "Poll successfully deleted!";
+            return RedirectToAction("Index", "Home");
         }
 
         [NonAction]
@@ -102,6 +125,32 @@ namespace Licenta.Controllers
             Profile ownProfile = queryProfiles.FirstOrDefault();
 
             return ownProfile;
+        }
+
+        [NonAction]
+        public bool UserIsAdmin()
+        {
+            // If the user is an administrator
+            if (User.IsInRole("Administrator"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        [NonAction]
+        public bool UserIsProfileOwner(Profile profileToCheck)
+        {
+            Profile ownProfile = GetOwnProfile();
+
+            // If the user owns the given profile
+            if (ownProfile.ProfileId == profileToCheck.ProfileId)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

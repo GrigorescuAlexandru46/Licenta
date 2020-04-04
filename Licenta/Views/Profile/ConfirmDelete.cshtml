@@ -1,0 +1,41 @@
+﻿
+@{
+    ViewBag.Title = "Confirm account deletion";
+}
+
+<h2>@ViewBag.Title</h2>
+<hr/>
+
+<div class="panel panel-danger">
+    <div class="panel-heading">
+        <h3 class="panel-title">Confirmation</h3>
+        
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Are you sure that you want to delete this account?</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h5>All the polls created by this account will also be deleted.<br />Note that this action will make irreversible changes.</h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">&nbsp;</div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <form action="/profile/delete/@Model.ProfileId" method="post">
+                    @Html.HttpMethodOverride(HttpVerbs.Delete)
+                    <button type="submit" class="btn btn-danger">Delete account</button>
+                </form>
+            </div>
+            <div class="col-md-2">
+                @Html.ActionLink("Back to profile", "Show", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-info" })
+            </div>
+        </div>
+    </div>
+</div>
+

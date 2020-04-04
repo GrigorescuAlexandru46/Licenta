@@ -2,9 +2,16 @@
     ViewBag.Title = "List of all polls";
 }
 
-<h2>@ViewBag.Title</h2>
-<hr/>
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
 
+<h2>@ViewBag.Title</h2>
+<hr />
 
 @if (ViewBag.PollsList.Count == 0)
 {
@@ -15,11 +22,11 @@ else
     <div class="list-group">
         @foreach (var poll in ViewBag.PollsList)
         {
-        <a href="/Poll/Show/@poll.PollId" class="list-group-item">
-            <div class="badge label label-default">Created at: <br /> @poll.CreationDate</div>
-            <h4>@poll.Name</h4>
-            <h6>Created by: @poll.Profile.FirstName @poll.Profile.LastName</h6>
-        </a>
+            <a href="/Poll/Show/@poll.PollId" class="list-group-item">
+                <div class="badge label label-default">Created at: <br /> @poll.CreationDate</div>
+                <h4>@poll.Name</h4>
+                <h6>Created by: @poll.Profile.FirstName @poll.Profile.LastName</h6>
+            </a>
         }
     </div>
 }

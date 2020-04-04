@@ -14,7 +14,6 @@ namespace Licenta.Controllers
             {
                 ViewBag.Message = TempData["Message"].ToString();
             }
-
             return View();
         }
 

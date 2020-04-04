@@ -403,6 +403,11 @@ namespace Licenta.Controllers
         public ActionResult LogOff()
         {
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+
+            if (TempData.ContainsKey("Message"))
+            {
+                TempData["Message"] = TempData["Message"];
+            } 
             return RedirectToAction("Index", "Home");
         }
 

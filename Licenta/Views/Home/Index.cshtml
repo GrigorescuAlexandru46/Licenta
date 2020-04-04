@@ -1,8 +1,14 @@
 ﻿@{
-    ViewBag.Title = "Home Page";
+    ViewBag.Title = "Home";
 }
 
-<h1>@ViewBag.message</h1>
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
 
 <div class="jumbotron">
     <h1>ASP.NET</h1>

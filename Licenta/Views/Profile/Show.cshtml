@@ -4,9 +4,15 @@
     ViewBag.Title = "Profile of " + Model.FirstName;
 }
 
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
+
 <h1>@ViewBag.Title</h1>
-
-
 <hr />
 
 <div class="panel panel-primary">
@@ -34,7 +40,7 @@
                 <label class="col-lg-2 control-label">Polls created : </label>
                 <label class="col-lg-2 control-label">@Model.Polls.Count</label>
             </div>
-            <br/>
+            <br />
             <div class="row">
                 <div class="col-lg-2 control-label">
                     @Html.ActionLink("View the polls of this user", "ShowPolls", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-default" })
@@ -57,20 +63,26 @@
 {
     <div class="container">
         <div class="row">
-            <div class="col-md-10">
-                @Html.ActionLink("Edit profile", "Edit", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-default" })
-                @if (ViewBag.UserIsProfileOwner)
-                {
-                     @Html.ActionLink("Change your password", "ChangePassword", "Manage", null, new { @class = "btn btn-default" })
-                }
-            </div>
-            
             <div class="col-md-2">
-                <form action="/profile/delete/@Model.ProfileId" method="post">
-                    @Html.HttpMethodOverride(HttpVerbs.Delete)
-                    <button type="submit" class="btn btn-danger">Delete account</button>
-                </form>
+                @Html.ActionLink("Edit profile", "Edit", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-info" })
+
             </div>
+            @if (ViewBag.UserIsProfileOwner)
+            {
+                <div class="col-md-2 col-md-offset-6">
+                    @Html.ActionLink("Change your password", "ChangePassword", "Manage", null, new { @class = "btn btn-warning" })
+                </div>
+                <div class="col-md-2">
+                    @Html.ActionLink("Delete account", "ConfirmDelete", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-danger" })
+                </div>
+            }
+            else
+            {
+                <div class="col-md-2 col-md-offset-8">
+                    @Html.ActionLink("Delete account", "ConfirmDelete", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-danger" })
+                </div>
+            }
+
         </div>
     </div>
 }
