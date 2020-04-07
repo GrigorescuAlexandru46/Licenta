@@ -51,17 +51,10 @@ namespace Licenta.Controllers
         }
 
         [HttpPost]
-        public ActionResult New(Poll poll)
+        public ActionResult New(FormCollection form)
         {
             try
             {
-                Profile ownProfile = GetOwnProfile();
-
-                poll.OwnerId = ownProfile.ProfileId;
-
-                db.Polls.Add(poll);
-                db.SaveChanges();
-
                 TempData["Message"] = "Poll successfully created!";
                 return RedirectToAction("Index", "Home");
             }

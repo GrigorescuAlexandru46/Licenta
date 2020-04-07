@@ -281,6 +281,7 @@
         var newInput = document.createElement("input");
         newInput.id = "Question" + questionId + "_AnswersCount";
         newInput.name = "Question" + questionId + "_AnswersCount";
+        newInput.type = "hidden";
         newInput.value = 0;
         divWithData.append(newInput);
     }
@@ -440,20 +441,12 @@
                     @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
                     @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
                 </div>
-                <div class="form-group">
-                    @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
-                    @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
-                </div>
-                <div class="form-group">
-                    @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
-                    @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
-                </div>
             </div>
         </div>
     </div>
 
     <div id="Questions_Data" name="Questions_Data">
-        <input id="Questions_Count" name="Questions_Count" type="number" value="0" />
+        <input id="Questions_Count" name="Questions_Count" type="hidden" value="0" />
     </div>
     <br/>
 
