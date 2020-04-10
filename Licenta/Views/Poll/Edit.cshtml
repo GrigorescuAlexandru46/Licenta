@@ -1,7 +1,571 @@
 ﻿@model Licenta.Models.Poll
 @{
     ViewBag.Title = "Edit poll";
+    int i = 1;
+    int j = 1;
 }
+
+<script>
+
+    var questionsJson = @Html.Raw(@ViewBag.QuestionsJson);
+
+
+    window.onload = function () {
+        @foreach (var question in Model.Questions)
+        {
+            <text>onLoadAddQuestion()</text>
+
+            j = 1;
+            foreach(var answer in question.Answers)
+            {
+                <text>onLoadAddAnswerToQuestion(</text> @i <text>);</text>
+                j++;
+            }
+
+            i++;
+        }
+    }
+
+    function increaseQuestionsCount() {
+        // Increase the questions count
+        var value = parseInt(document.getElementById("Questions_Count").value, 10);
+        value = isNaN(value) ? 0 : value;
+        value++;
+        document.getElementById("Questions_Count").value = value;
+    }
+
+    function increaseQuestionAnswersCount(questionId) {
+        var value = parseInt(document.getElementById("Question" + questionId + "_AnswersCount").value, 10);
+
+        value = isNaN(value) ? 0 : value;
+        value++;
+
+        document.getElementById("Question" + questionId + "_AnswersCount").value = value;
+    }
+
+    function decreaseQuestionsCount() {
+        // Increase the questions count
+        var value = parseInt(document.getElementById("Questions_Count").value, 10);
+        value = isNaN(value) ? 0 : value;
+        value--;
+        document.getElementById("Questions_Count").value = value;
+    }
+
+    function decreaseQuestionAnswersCount(questionId) {
+        var value = parseInt(document.getElementById("Question" + questionId + "_AnswersCount").value, 10);
+
+        value = isNaN(value) ? 0 : value;
+        value--;
+
+        document.getElementById("Question" + questionId + "_AnswersCount").value = value;
+    }
+
+    function extractQuestionId(stringTagId) {
+
+
+        var stringMatches = stringTagId.match(/(\d+)/);
+        var stringQuestionId = stringMatches[0];
+
+        var numberQuestionId = parseInt(stringQuestionId, 10);
+        numberQuestionId = isNaN(numberQuestionId) ? 0 : numberQuestionId;
+
+        return numberQuestionId;
+    }
+
+    function extractRowId(stringTagId) {
+        stringTagId = stringTagId.substring(stringTagId.search("Row"));
+
+        var stringMatches = stringTagId.match(/(\d+)/);
+        var stringAnswerId = stringMatches[0];
+
+        var numberAnswerId = parseInt(stringAnswerId, 10);
+        numberAnswerId = isNaN(numberAnswerId) ? 0 : numberAnswerId;
+
+        return numberAnswerId;
+    }
+
+    function getNewAnswerId(questionId) {
+        var value = parseInt(document.getElementById("Question" + questionId + "_AnswersCount").value, 10);
+
+        value = isNaN(value) ? 0 : value;
+        value++;
+
+        return value;
+    }
+
+    function addQuestion() {
+        var addQuestionListItem = document.getElementById("ListItem_AddQuestion");
+        var questionsList = addQuestionListItem.parentNode;
+        var newQuestionId = getNewQuestionId();
+
+        // Create the new list item which contains the new question and append it to the list of questions
+        var newListItem = createListItemQuestion(newQuestionId);
+        questionsList.insertBefore(newListItem, addQuestionListItem);
+
+        initializeInputWithQuestionData(newQuestionId);
+        increaseQuestionsCount();
+
+        addAnswerToQuestion(newQuestionId);
+    }
+
+    function onLoadAddQuestion() {
+        var addQuestionListItem = document.getElementById("ListItem_AddQuestion");
+        var questionsList = addQuestionListItem.parentNode;
+        var newQuestionId = getNewQuestionId();
+
+        // Create the new list item which contains the new question and append it to the list of questions
+        var newListItem = onLoadCreateListItemQuestion(newQuestionId);
+        questionsList.insertBefore(newListItem, addQuestionListItem);
+
+        initializeInputWithQuestionData(newQuestionId);
+        increaseQuestionsCount();
+    }
+
+    function addAnswerToQuestion(questionId) {
+        var question = document.getElementById("Question" + questionId);
+        var divAddAnswer = document.getElementById("Question" + questionId + "_Row_AddAnswer_Content");
+        var newAnswerId = getNewAnswerId(questionId);
+
+        // Create the row which contains the label and the input and appends it to the question
+        var newRowWithContent = createRowWithContentTextarea(questionId, newAnswerId)
+        question.insertBefore(newRowWithContent, divAddAnswer);
+
+        // Create the row which contains the empty space and appends it to the question
+        var newRowWithEmptySpace = createRowWithEmptySpace(questionId, newAnswerId);
+        question.insertBefore(newRowWithEmptySpace, divAddAnswer);
+
+        increaseQuestionAnswersCount(questionId);
+    }
+
+    function onLoadAddAnswerToQuestion(questionId) {
+        var question = document.getElementById("Question" + questionId);
+        var divAddAnswer = document.getElementById("Question" + questionId + "_Row_AddAnswer_Content");
+        var newAnswerId = getNewAnswerId(questionId);
+
+        // Create the row which contains the label and the input and appends it to the question
+        var newRowWithContent = onLoadCreateRowWithContentTextarea(questionId, newAnswerId)
+        question.insertBefore(newRowWithContent, divAddAnswer);
+
+        // Create the row which contains the empty space and appends it to the question
+        var newRowWithEmptySpace = createRowWithEmptySpace(questionId, newAnswerId);
+        question.insertBefore(newRowWithEmptySpace, divAddAnswer);
+
+        increaseQuestionAnswersCount(questionId);
+    }
+
+    function createListItemQuestion(questionId) {
+        var newQuestionId = getNewQuestionId();
+
+        // Create the list item
+        var newListItem = document.createElement("li");
+        newListItem.id = "Question" + questionId;
+        newListItem.classList.add("list-group-item");
+
+        // Create the row which contains the question text label and the input and appends it to the question list item
+        var newRowWithContent = createRowWithQuestionTextContent(newQuestionId);
+        newListItem.appendChild(newRowWithContent);
+
+        // Create the row which contains the empty space and appends it to the question list item
+        var newRowWithEmptySpace = createRowWithQuestionTextEmpty(newQuestionId);
+        newListItem.appendChild(newRowWithEmptySpace);
+
+        // Create the row which contains the add answer button and appends it to the question list item
+        var newRowWithAddAnswerButtonContent = createRowWithQuestionAddAnswerButtonContent(questionId);
+        newListItem.appendChild(newRowWithAddAnswerButtonContent);
+
+        // Create the row which contains the empty space and appends it to the question list item
+        var newRowWithAddAnswerButtonEmpty = createRowWithQuestionAddAnswerButtonEmpty(questionId);
+        newListItem.appendChild(newRowWithAddAnswerButtonEmpty);
+
+        return newListItem;
+    }
+
+    function onLoadCreateListItemQuestion(questionId) {
+        var newQuestionId = getNewQuestionId();
+
+        // Create the list item
+        var newListItem = document.createElement("li");
+        newListItem.id = "Question" + questionId;
+        newListItem.classList.add("list-group-item");
+
+        // Create the row which contains the question text label and the input and appends it to the question list item
+        var newRowWithContent = onLoadCreateRowWithQuestionTextContent(newQuestionId);
+        newListItem.appendChild(newRowWithContent);
+
+        // Create the row which contains the empty space and appends it to the question list item
+        var newRowWithEmptySpace = createRowWithQuestionTextEmpty(newQuestionId);
+        newListItem.appendChild(newRowWithEmptySpace);
+
+        // Create the row which contains the add answer button and appends it to the question list item
+        var newRowWithAddAnswerButtonContent = createRowWithQuestionAddAnswerButtonContent(questionId);
+        newListItem.appendChild(newRowWithAddAnswerButtonContent);
+
+        // Create the row which contains the empty space and appends it to the question list item
+        var newRowWithAddAnswerButtonEmpty = createRowWithQuestionAddAnswerButtonEmpty(questionId);
+        newListItem.appendChild(newRowWithAddAnswerButtonEmpty);
+
+        return newListItem;
+    }
+
+    function createRowWithQuestionTextContent(questionId) {
+        // Create the row which contains the label and textarea
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row_QuestionText_Content";
+        newRow.classList.add("row");
+
+        // Create the label and append it to the row
+        var newLabel = document.createElement("label");
+        newLabel.classList.add("col-lg-2");
+        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("control-label");
+        newLabel.innerHTML = "Question text:";
+        newRow.appendChild(newLabel);
+
+        // Create the textarea and append it to the row
+        var newTextarea = document.createElement("textarea");
+        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("form-control");
+        newTextarea.id = "Question" + questionId + "_Text";
+        newTextarea.name = "Question" + questionId + "_Text";
+        newTextarea.rows = 2;
+        newTextarea.cols = 20;
+        newRow.appendChild(newTextarea);
+
+        return newRow;
+    }
+
+    function onLoadCreateRowWithQuestionTextContent(questionId) {
+        // Create the row which contains the label and textarea
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row_QuestionText_Content";
+        newRow.classList.add("row");
+
+        // Create the label and append it to the row
+        var newLabel = document.createElement("label");
+        newLabel.classList.add("col-lg-2");
+        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("control-label");
+        newLabel.innerHTML = "Question text:";
+        newRow.appendChild(newLabel);
+
+        // Create the textarea and append it to the row
+        var newTextarea = document.createElement("textarea");
+        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("form-control");
+        newTextarea.id = "Question" + questionId + "_Text";
+        newTextarea.name = "Question" + questionId + "_Text";
+        newTextarea.rows = 2;
+        newTextarea.cols = 20;
+        newTextarea.value = questionsJson[questionId - 1].Text;
+        newRow.appendChild(newTextarea);
+
+        return newRow;
+    }
+
+    function createRowWithQuestionTextEmpty(questionId) {
+        // Create the row which contains the div which contains empty space
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row_QuestionText_Empty";
+        newRow.classList.add("row");
+
+        // Create the div which contains empty space and append it to the row
+        var newRowWithSpace = document.createElement("div");
+        newRowWithSpace.classList.add("col-md-12");
+        newRowWithSpace.innerHTML = "&nbsp;";
+        newRow.appendChild(newRowWithSpace);
+
+        return newRow;
+    }
+
+    function createRowWithQuestionAddAnswerButtonContent(questionId) {
+        // Create the row which contains the add answer button
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row_AddAnswer_Content";
+        newRow.classList.add("row");
+
+        // Create the add answer button and append it to the row
+        var newAddAnswerButton = document.createElement("a");
+        newAddAnswerButton.classList.add("btn");
+        newAddAnswerButton.classList.add("btn-default");
+        newAddAnswerButton.classList.add("col-lg-3");
+        newAddAnswerButton.classList.add("col-lg-offset-2");
+        newAddAnswerButton.innerHTML = "Add answer";
+        newAddAnswerButton.addEventListener("click", function (event) {
+            var auxQuestionId = extractQuestionId(event.target.parentNode.id)
+            addAnswerToQuestion(auxQuestionId);
+        })
+        newRow.appendChild(newAddAnswerButton);
+
+        // Create the remove question button and append it to the row
+        var newRemoveQuestionButton = document.createElement("a");
+        newRemoveQuestionButton.classList.add("btn");
+        newRemoveQuestionButton.classList.add("btn-danger");
+        newRemoveQuestionButton.classList.add("col-lg-3");
+        newRemoveQuestionButton.classList.add("col-lg-offset-1");
+        newRemoveQuestionButton.innerHTML = "Remove question";
+        newRemoveQuestionButton.addEventListener("click", function (event) {
+            removeQuestion(event.target);
+        })
+        newRow.appendChild(newRemoveQuestionButton);
+
+        return newRow;
+    }
+
+    function createRowWithQuestionAddAnswerButtonEmpty(questionId) {
+        // Create the row which contains the div which contains empty space
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row_AddAnswer_Empty";
+        newRow.classList.add("row");
+
+        // Create the div which contains empty space and append it to the row
+        var newRowWithSpace = document.createElement("div");
+        newRowWithSpace.classList.add("col-md-12");
+        newRowWithSpace.innerHTML = "&nbsp;";
+        newRow.appendChild(newRowWithSpace);
+
+        return newRow;
+    }
+
+    function createRowWithContentTextarea(questionId, newAnswerId) {
+        // Create the row which contains the label and textarea
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row" + newAnswerId + "_Content";
+        newRow.classList.add("row");
+
+        // Create the label and append it to the row
+        var newLabel = document.createElement("label");
+        newLabel.classList.add("col-lg-2");
+        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("control-label");
+        newLabel.innerHTML = "Answer" + newAnswerId + ":";
+        newRow.appendChild(newLabel);
+
+        // Create the textarea and append it to the row
+        var newTextarea = document.createElement("textarea");
+        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("form-control");
+        newTextarea.id = "Question" + questionId + "_Answer" + newAnswerId;
+        newTextarea.name = "Question" + questionId + "_Answer" + newAnswerId;
+        newTextarea.rows = 1;
+        newTextarea.cols = 20;
+        newRow.appendChild(newTextarea);
+
+        // Create the remove answer button and append it to the row
+        var newRemoveButton = document.createElement("a");
+        newRemoveButton.classList.add("btn");
+        newRemoveButton.classList.add("btn-danger");
+        newRemoveButton.classList.add("col-lg-1");
+        newRemoveButton.classList.add("col-lg-offset-1");
+        newRemoveButton.addEventListener("click", function (event) {
+            removeAnswer(event.target);
+        })
+        newRemoveButton.innerHTML = "Remove";
+        newRow.appendChild(newRemoveButton);
+
+        return newRow;
+    }
+
+    function onLoadCreateRowWithContentTextarea(questionId, newAnswerId) {
+        // Create the row which contains the label and textarea
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row" + newAnswerId + "_Content";
+        newRow.classList.add("row");
+
+        // Create the label and append it to the row
+        var newLabel = document.createElement("label");
+        newLabel.classList.add("col-lg-2");
+        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("control-label");
+        newLabel.innerHTML = "Answer" + newAnswerId + ":";
+        newRow.appendChild(newLabel);
+
+        // Create the textarea and append it to the row
+        var newTextarea = document.createElement("textarea");
+        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("form-control");
+        newTextarea.id = "Question" + questionId + "_Answer" + newAnswerId;
+        newTextarea.name = "Question" + questionId + "_Answer" + newAnswerId;
+        newTextarea.rows = 1;
+        newTextarea.cols = 20;
+        newTextarea.value = questionsJson[questionId - 1].Answers[newAnswerId - 1].Text;
+        newRow.appendChild(newTextarea);
+
+        // Create the remove answer button and append it to the row
+        var newRemoveButton = document.createElement("a");
+        newRemoveButton.classList.add("btn");
+        newRemoveButton.classList.add("btn-danger");
+        newRemoveButton.classList.add("col-lg-1");
+        newRemoveButton.classList.add("col-lg-offset-1");
+        newRemoveButton.addEventListener("click", function (event) {
+            removeAnswer(event.target);
+        })
+        newRemoveButton.innerHTML = "Remove";
+        newRow.appendChild(newRemoveButton);
+
+        return newRow;
+    }
+
+    function createRowWithEmptySpace(questionId, newAnswerId) {
+        // Create the row which contains the div which contains empty space
+        var newRow = document.createElement("div");
+        newRow.id = "Question" + questionId + "_Row" + newAnswerId + "_Empty";
+        newRow.classList.add("row");
+
+        // Create the div which contains empty space and append it to the row
+        var newRowWithSpace = document.createElement("div");
+        newRowWithSpace.classList.add("col-md-12");
+        newRowWithSpace.innerHTML = "&nbsp;";
+        newRow.appendChild(newRowWithSpace);
+
+        return newRow;
+    }
+
+    function initializeInputWithQuestionData(questionId) {
+        var divWithData = document.getElementById("Questions_Data");
+
+        // Create the input which contains the number of answers of given the question and append it to the questions data div
+        var newInput = document.createElement("input");
+        newInput.id = "Question" + questionId + "_AnswersCount";
+        newInput.name = "Question" + questionId + "_AnswersCount";
+        newInput.type = "hidden";
+        newInput.value = 0;
+        divWithData.append(newInput);
+    }
+
+    function removeInputWithQuestionData(questionId) {
+        var divWithData = document.getElementById("Questions_Data");
+        var input = document.getElementById("Question" + questionId + "_AnswersCount");
+
+        divWithData.removeChild(input);
+    }
+
+    function getNewQuestionId() {
+        var value = parseInt(document.getElementById("Questions_Count").value, 10);
+        value = isNaN(value) ? 0 : value;
+        value++;
+
+        return value;
+    }
+
+    function removeAnswer(removeButton) {
+        var question = removeButton.parentNode.parentNode;
+        var questionId = extractQuestionId(question.id);
+        var removedAnswerId = extractRowId(removeButton.parentNode.id);
+
+        var removedRowContent = removeButton.parentNode;
+        var removedRowEmpty = removedRowContent.nextElementSibling;
+
+        question.removeChild(removedRowContent);
+        question.removeChild(removedRowEmpty);
+
+        decreaseQuestionAnswersCount(questionId);
+
+        updateAnswersOfQuestionAfterRemove(questionId, removedAnswerId);
+    }
+
+    function updateAnswersOfQuestionAfterRemove(questionId, removedAnswerId) {
+        var answersCount = parseInt(document.getElementById("Question" + questionId + "_AnswersCount").value, 10);
+
+        for (let outdatedAnswerId = removedAnswerId + 1; outdatedAnswerId <= answersCount + 1; outdatedAnswerId++) {
+            var updatedAnswerId = outdatedAnswerId - 1;
+
+            // Update row with label input and button
+            var rowContent = document.getElementById("Question" + questionId + "_Row" + outdatedAnswerId + "_Content");
+            rowContent.id = "Question" + questionId + "_Row" + updatedAnswerId + "_Content";
+
+            // Update label of row
+            rowContent.children[0].innerHTML = "Answer" + updatedAnswerId + ":";
+
+            // Update input of row
+            rowContent.children[1].id = "Question" + questionId + "_Answer" + updatedAnswerId;
+            rowContent.children[1].name = "Question" + questionId + "_Answer" + updatedAnswerId;
+
+            // Update "remove answer button" of row
+            var cloneAnchor = rowContent.children[2].cloneNode(true);
+            rowContent.replaceChild(cloneAnchor, rowContent.children[2]);
+            rowContent.children[2].addEventListener("click", function (event) {
+                removeAnswer(event.target);
+            })
+
+            // Update row with empty space
+            var rowEmpty = document.getElementById("Question" + questionId + "_Row" + outdatedAnswerId + "_Empty");
+            rowEmpty.id = "Question" + questionId + "_Row" + updatedAnswerId + "_Empty";
+        }
+    }
+
+    function removeQuestion(removeButton) {
+        var questionsList = removeButton.parentNode.parentNode.parentNode;
+        var questionsListItem = removeButton.parentNode.parentNode;
+        var questionId = extractQuestionId(questionsListItem.id);
+
+        questionsList.removeChild(questionsListItem);
+
+
+        decreaseQuestionsCount();
+
+        updateQuestionsAfterRemove(questionId);
+        removeInputWithQuestionData(questionId);
+    }
+
+    function updateQuestionsAfterRemove(removedQuestionId) {
+        var questionsCount = parseInt(document.getElementById("Questions_Count").value, 10);
+
+        for (let outdatedQuestionId = removedQuestionId + 1; outdatedQuestionId <= questionsCount + 1; outdatedQuestionId++) {
+            var updatedQuestionId = outdatedQuestionId - 1;
+
+            // Update all answers, must do first
+            updateAnswersAfterQuestionRemove(outdatedQuestionId);
+
+            // Update the list item
+            var listItem = document.getElementById("Question" + outdatedQuestionId);
+            listItem.id = "Question" + updatedQuestionId;
+
+            // Update the row with question text with content
+            var rowQuestionTextContent = document.getElementById("Question" + outdatedQuestionId + "_Row_QuestionText_Content");
+            rowQuestionTextContent.id = "Question" + updatedQuestionId + "_Row_QuestionText_Content";
+
+            // Update the textarea row
+            rowQuestionTextContent.children[1].id = "Question" + updatedQuestionId + "_Text";
+            rowQuestionTextContent.children[1].name = "Question" + updatedQuestionId + "_Text";
+
+            // Update the row with question text with empty space
+            var rowQuestionTextEmpty = document.getElementById("Question" + outdatedQuestionId + "_Row_QuestionText_Empty");
+            rowQuestionTextEmpty.id = "Question" + updatedQuestionId + "_Row_QuestionText_Empty";
+
+            // Update the buttons add answer and remove question with content
+            var rowAddAnswerContent = document.getElementById("Question" + outdatedQuestionId + "_Row_AddAnswer_Content");
+            rowAddAnswerContent.id = "Question" + updatedQuestionId + "_Row_AddAnswer_Content";
+
+            // Update the buttons add answer and remove question with content
+            var rowAddAnswerEmpty = document.getElementById("Question" + outdatedQuestionId + "_Row_AddAnswer_Empty");
+            rowAddAnswerEmpty.id = "Question" + updatedQuestionId + "_Row_AddAnswer_Empty";
+
+            // Update the inputs in questions data
+            var inputQuestionData = document.getElementById("Question" + outdatedQuestionId + "_AnswersCount");
+            inputQuestionData.id = "Question" + updatedQuestionId + "_AnswersCount";
+            inputQuestionData.name = "Question" + updatedQuestionId + "_AnswersCount";
+        }
+    }
+
+    function updateAnswersAfterQuestionRemove(outdatedQuestionId) {
+        var answersCount = parseInt(document.getElementById("Question" + outdatedQuestionId + "_AnswersCount").value, 10);
+        var updatedQuestionId = outdatedQuestionId - 1;
+
+        for (let answerId = 1; answerId <= answersCount; answerId++) {
+            // Update row with label input and button
+            var rowContent = document.getElementById("Question" + outdatedQuestionId + "_Row" + answerId + "_Content");
+            rowContent.id = "Question" + updatedQuestionId + "_Row" + answerId + "_Content";
+
+            // Update input of row
+            rowContent.children[1].id = "Question" + updatedQuestionId + "_Answer" + answerId;
+            rowContent.children[1].name = "Question" + updatedQuestionId + "_Answer" + answerId;
+
+            // Update row with empty space
+            var rowEmpty = document.getElementById("Question" + outdatedQuestionId + "_Row" + answerId + "_Empty");
+            rowEmpty.id = "Question" + updatedQuestionId + "_Row" + answerId + "_Empty";
+        }
+    }
+</script>
 
 <h2>@ViewBag.Title</h2>
 <hr />
@@ -11,22 +575,46 @@
 
 @using (Html.BeginForm("Edit", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
 {
-<fieldset>
-    <div class="form-group">
-        @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
-        <div class="col-lg-10">
-            @Html.TextBox("Name", Model.Name, new { @class = "form-control" })
+    <div class="panel panel-primary">
+        <div class="panel-heading">Poll details</div>
+        <div class="panel-body">
+            <div class="container">
+                <div class="form-group">
+                    @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
+                    @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
+                </div>
+            </div>
         </div>
     </div>
 
-    @Html.Hidden("PollId", Model.PollId)
-    @Html.Hidden("OwnerId", Model.OwnerId)
+    <div id="Questions_Data" name="Questions_Data">
+        <input id="Questions_Count" name="Questions_Count" type="hidden" value="0" />
+    </div>
+    <br />
+
+    <ul class="list-group">
+        <li class="list-group-item active">
+            <h4 class="list-group-item-heading">Questions</h4>
+        </li>
+        <li id="ListItem_AddQuestion" class="list-group-item">
+            <div class="row">
+                <div class="col-lg-12">&nbsp;</div>
+            </div>
+            <div class="row">
+                <a onclick="addQuestion(this);" class="btn btn-info col-lg-2 col-lg-offset-1">Add question</a>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">&nbsp;</div>
+            </div>
+        </li>
+    </ul>
+
+    <input id="PollId" name="PollId" type="hidden" value="@Model.PollId" />
     @Html.Hidden("CreationDate", DateTime.Now)
 
     <div class="form-group">
-        <div class="col-md-offset-2 col-md-10">
-            <input type="submit" class="btn btn-default" value="Create" />
+        <div class="col-md-3 col-md-offset-4">
+            <input type="submit" class="btn btn-success btn-block" value="Save changes" />
         </div>
     </div>
-</fieldset>
 }

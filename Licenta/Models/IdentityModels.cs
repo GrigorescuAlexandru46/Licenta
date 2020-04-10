@@ -23,6 +23,7 @@ namespace Licenta.Models
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Poll> Polls { get; set; }
         public DbSet<Question> Questions { get; set; }
+        public DbSet<Answer> Answers { get; set; }
 
 
         public ApplicationDbContext(): base("DefaultConnection", throwIfV1Schema: false)

@@ -1,5 +1,6 @@
 ﻿using Licenta.Models;
 using Microsoft.AspNet.Identity;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,6 +56,41 @@ namespace Licenta.Controllers
         {
             try
             {
+                Poll poll = new Poll();
+                int questionCount = ConvertStringToInt(form["Questions_Count"]);
+
+                poll.Name = form["Name"];
+                poll.CreationDate = ConvertStringToDateTime(form["CreationDate"]);
+                poll.OwnerId = GetOwnProfile().ProfileId;
+
+                db.Polls.Add(poll);
+                db.SaveChanges();
+
+                for (int i = 1; i <= questionCount; i++)
+                {
+                    Question question = new Question();
+                    int answersCount = ConvertStringToInt(form["Question" + i + "_AnswersCount"]);
+
+                    question.Text = form["Question" + i + "_Text"];
+                    question.PollId = poll.PollId;
+
+                    db.Questions.Add(question);
+                    db.SaveChanges();
+
+                    for (int j = 1; j <= answersCount; j++)
+                    {
+                        Answer answer = new Answer();
+
+                        answer.Text = form["Question" + i + "_Answer" + j];
+                        answer.QuestionId = question.QuestionId;
+
+                        db.Answers.Add(answer);
+                        db.SaveChanges();
+                    }
+
+                    poll.Questions.Add(question);    
+                }
+
                 TempData["Message"] = "Poll successfully created!";
                 return RedirectToAction("Index", "Home");
             }
@@ -68,20 +104,54 @@ namespace Licenta.Controllers
         public ActionResult Edit(int id)
         {
             Poll poll = db.Polls.Find(id);
+
+            ViewBag.QuestionsJson = ConvertPollToValidQuestionsJson(poll);
+
             return View(poll);
         }
 
         [HttpPost]
-        public ActionResult Edit(int id, Poll newPoll)
+        public ActionResult Edit(FormCollection form)
         {
             try
-            {
-                Poll oldPoll = db.Polls.Find(id);
-                if (TryUpdateModel(oldPoll))
-                {
-                    oldPoll.Name = newPoll.Name;
+            { 
+                Poll oldPoll = db.Polls.Find(ConvertStringToInt(form["PollId"]));
+                db.Polls.Remove(oldPoll);
 
+                Poll newPoll = new Poll();
+
+                int questionCount = ConvertStringToInt(form["Questions_Count"]);
+
+                newPoll.Name = form["Name"];
+                newPoll.CreationDate = ConvertStringToDateTime(form["CreationDate"]);
+                newPoll.OwnerId = GetOwnProfile().ProfileId;
+
+                db.Polls.Add(newPoll);
+                db.SaveChanges();
+
+                for (int i = 1; i <= questionCount; i++)
+                {
+                    Question question = new Question();
+                    int answersCount = ConvertStringToInt(form["Question" + i + "_AnswersCount"]);
+
+                    question.Text = form["Question" + i + "_Text"];
+                    question.PollId = newPoll.PollId;
+
+                    db.Questions.Add(question);
                     db.SaveChanges();
+
+                    for (int j = 1; j <= answersCount; j++)
+                    {
+                        Answer answer = new Answer();
+
+                        answer.Text = form["Question" + i + "_Answer" + j];
+                        answer.QuestionId = question.QuestionId;
+
+                        db.Answers.Add(answer);
+                        db.SaveChanges();
+                    }
+
+                    newPoll.Questions.Add(question);
                 }
 
                 TempData["Message"] = "Poll successfully edited!";
@@ -144,6 +214,120 @@ namespace Licenta.Controllers
             }
 
             return false;
+        }
+
+        [NonAction]
+        public int ConvertStringToInt(string s)
+        {
+            try
+            {
+                return Int32.Parse(s);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return -1;
+            }
+        }
+
+        [NonAction]
+        public DateTime ConvertStringToDateTime(string s)
+        {
+            try
+            {
+                DateTime dateTime = DateTime.ParseExact(s, "dd-MMM-y h:mm:ss tt", null);
+                return dateTime;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return DateTime.Now;
+            }
+        }
+
+        [NonAction]
+        public string ConvertPollToValidQuestionsJson(Poll poll)
+        {
+            try
+            {
+                string jsonQuestions;
+
+                jsonQuestions = "[";
+
+                foreach (Question question in poll.Questions)
+                {
+                    jsonQuestions += CreateJsonQuestion(question);
+
+                    if (question != poll.Questions.Last())
+                    {
+                        jsonQuestions += ", ";
+                    }
+
+                }
+
+                jsonQuestions += "]";
+
+                return jsonQuestions;
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return null;
+            }
+        }
+
+        [NonAction]
+        public string CreateJsonQuestion(Question question)
+        {
+            string jsonQuestion;
+
+            jsonQuestion = "{" +
+                              Surround("Text") + " : " + Surround(question.Text) + ", " +
+                              Surround("Answers") + " : " + CreateJsonAnswers(question.Answers) +
+                           "}";
+
+            return jsonQuestion;
+        }
+
+        [NonAction]
+        public string CreateJsonAnswers(ICollection<Answer> answers)
+        {
+            string jsonAnswers;
+
+            jsonAnswers = "[";
+
+            foreach (Answer answer in answers)
+            {
+                jsonAnswers += CreateJsonOneAnswer(answer);
+
+                if (answer != answers.Last())
+                {
+                    jsonAnswers += ", ";
+                }
+            }
+
+            jsonAnswers += "]";
+
+            return jsonAnswers;
+        }
+
+        [NonAction]
+        public string CreateJsonOneAnswer(Answer answer)
+        {
+            string jsonAnswer = "";
+
+            jsonAnswer = "{" +
+                            Surround("Text") + " : " + Surround(answer.Text) +
+                         "}";
+
+            return jsonAnswer;
+        }
+
+        [NonAction]
+        public string Surround(string text)
+        {
+            return "\"" + text + "\"";
         }
     }
 }

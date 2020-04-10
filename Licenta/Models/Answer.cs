@@ -7,17 +7,17 @@ using System.Web;
 
 namespace Licenta.Models
 {
-    public class Question
+    public class Answer
     {
         [Key]
-        public int QuestionId { get; set; }
+        public int AnswerId { get; set; }
 
         public string Text { get; set; }
 
-        [ForeignKey("Poll")]
-        public int PollId { get; set; }
+        [ForeignKey("Question")]
+        public int QuestionId { get; set; }
 
-        public virtual Poll Poll { get; set; }
-        public virtual ICollection<Answer> Answers { get; set; }
+        public virtual Question Question { get; set; }
+
     }
 }
