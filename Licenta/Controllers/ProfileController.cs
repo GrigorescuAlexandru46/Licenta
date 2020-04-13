@@ -1,12 +1,8 @@
 ﻿using Licenta.Models;
 using Microsoft.AspNet.Identity;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using Microsoft.AspNet.Identity.Owin;
-using System.Web.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Identity.EntityFramework;
 
@@ -91,7 +87,7 @@ namespace Licenta.Controllers
             return View(profile);
         }
 
-        [HttpPost]
+        [HttpPut]
         public ActionResult Edit(int id, Profile newProfile)
         {
             try
