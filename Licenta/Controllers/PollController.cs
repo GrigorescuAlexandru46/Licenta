@@ -114,7 +114,7 @@ namespace Licenta.Controllers
         public ActionResult Edit(FormCollection form)
         {
             try
-            { 
+            {
                 Poll oldPoll = db.Polls.Find(ConvertStringToInt(form["PollId"]));
                 db.Polls.Remove(oldPoll);
 
@@ -161,6 +161,56 @@ namespace Licenta.Controllers
             {
                 Console.WriteLine(e);
                 return View();
+            }
+        }
+
+        public ActionResult Fill(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            ViewBag.UserIsAdmin = UserIsAdmin();
+            ViewBag.UserIsProfileOwner = UserIsProfileOwner(poll.Profile);
+
+            return View(poll);
+        }
+
+        [HttpPost]
+        public ActionResult Fill(Poll poll, FormCollection form)
+        {
+            try
+            {
+                int questionCount = ConvertStringToInt(form["QuestionCount"]);
+                int submissionId = GetNextAvailableSubmissionId();
+
+                for (int i = 1; i <= questionCount; i++)
+                {
+                    Submission submission = new Submission();
+                    int answerCount = ConvertStringToInt(form["Question" + i + "_AnswerCount"]);
+                    string answerText = form["Question" + i + "_Answer"];
+
+                    submission.SubmissionId = submissionId;
+                    submission.SubmitDate = DateTime.Now;
+
+                    for (int j = 1; j <= answerCount; j++)
+                    {
+                        if (answerText.Equals(form["Question" + i + "_Answer" + j + "_Text"]))
+                        {
+                            submission.AnswerId = ConvertStringToInt(form["Question" + i + "_Answer" + j + "_Id"]);
+                            break;
+                        }
+                    }
+
+                    db.Submissions.Add(submission);
+                    db.SaveChanges();
+                }
+
+                TempData["Message"] = "Answers successfully sent!";
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return RedirectToAction("Fill", "Poll", new { id = poll.PollId });
             }
         }
 
@@ -214,6 +264,20 @@ namespace Licenta.Controllers
             }
 
             return false;
+        }
+
+        [NonAction]
+        public int GetNextAvailableSubmissionId()
+        {
+            var querySubmissionIds = from submission in db.Submissions
+                                     select submission.SubmissionId;
+
+            if (querySubmissionIds.Any())
+            {
+                return ConvertStringToInt(querySubmissionIds.Max().ToString()) + 1;
+            }
+
+            return 1;
         }
 
         [NonAction]

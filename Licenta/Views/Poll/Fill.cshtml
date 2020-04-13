@@ -1,0 +1,64 @@
+﻿@model Licenta.Models.Poll
+
+@{
+    ViewBag.Title = Model.Name;
+    int i = 1;
+    int j = 1;
+}
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p>@ViewBag.message</p>
+    </div>
+}
+
+<h1>@ViewBag.Title</h1>
+<hr />
+
+@using (Html.BeginForm("Fill", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+{
+    @Html.Hidden("QuestionCount", Model.Questions.Count)
+    foreach (var question in Model.Questions)
+    {
+        <div class="panel panel-primary">
+            <div class="panel-heading"></div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h4>@i. <span>&nbsp;</span> @question.Text</h4>
+                    </div>
+                </div>
+                @Html.Hidden("Question" + i + "_AnswerCount", Model.Questions.ElementAt(i - 1).Answers.Count)
+                @{ j = 1; }
+                @foreach (var answer in question.Answers)
+                {
+                    @Html.Hidden("Question" + i + "_Answer" + j + "_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).AnswerId)
+                    @Html.Hidden("Question" + i + "_Answer" + j + "_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).Text)
+                    <div class="row">
+                        <div class="col-lg-11 col-lg-offset-1">
+                            @Html.RadioButton("Question" + i + "_Answer", answer.Text)
+                            <label><span>&nbsp;&nbsp;</span>@answer.Text</label>
+                        </div>
+                    </div>
+                    j++;
+                }
+            </div>
+        </div>
+        i++;
+    }
+
+    <div class="row">
+        <div class="col-md-3 col-md-offset-4">
+            <input type="submit" class="btn btn-info btn-block" value="Submit" />
+        </div>
+    </div>
+
+    @Html.Hidden("PollId", Model.PollId)
+    @Html.Hidden("Name", Model.Name)
+    @Html.Hidden("OwnerId", Model.OwnerId)
+    @Html.Hidden("CreationDate", Model.CreationDate)
+}
+
+

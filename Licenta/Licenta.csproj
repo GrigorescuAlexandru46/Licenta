@@ -182,6 +182,7 @@
     <Compile Include="Models\Poll.cs" />
     <Compile Include="Models\Profile.cs" />
     <Compile Include="Models\Question.cs" />
+    <Compile Include="Models\Submission.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
@@ -254,6 +255,7 @@
     <Content Include="Views\Profile\Index.cshtml" />
     <Content Include="Views\Profile\ShowPolls.cshtml" />
     <Content Include="Views\Profile\ConfirmDelete.cshtml" />
+    <Content Include="Views\Poll\Fill.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

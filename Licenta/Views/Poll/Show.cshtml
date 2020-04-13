@@ -87,17 +87,18 @@
 
 @if (ViewBag.UserIsProfileOwner || ViewBag.UserIsAdmin)
 {
-    <div class="container">
-        <div class="row">
-            <div class="col-md-2">
-                @Html.ActionLink("Edit poll", "Edit", "Poll", new { id = Model.PollId }, new { @class = "btn btn-info" })
-            </div>
-            <div class="col-md-2 col-md-offset-8">
-                <form action="/poll/delete/@Model.PollId" method="post">
-                    @Html.HttpMethodOverride(HttpVerbs.Delete)
-                    <button type="submit" class="btn btn-danger">Delete poll</button>
-                </form>
-            </div>
+    <div class="row">
+        <div class="col-md-2">
+            @Html.ActionLink("Edit poll", "Edit", "Poll", new { id = Model.PollId }, new { @class = "btn btn-info btn-block" })
+        </div>
+        <div class="col-md-4 col-md-offset-2">
+            @Html.ActionLink("Start poll", "Fill", "Poll", new { id = Model.PollId }, new { @class = "btn btn-warning btn-block" })
+        </div>
+        <div class="col-md-2 col-md-offset-2">
+            <form action="/poll/delete/@Model.PollId" method="post">
+                @Html.HttpMethodOverride(HttpVerbs.Delete)
+                <button type="submit" class="btn btn-danger btn-block">Delete poll</button>
+            </form>
         </div>
     </div>
 }

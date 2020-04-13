@@ -24,6 +24,7 @@ namespace Licenta.Models
         public DbSet<Poll> Polls { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<Answer> Answers { get; set; }
+        public DbSet<Submission> Submissions { get; set; }
 
 
         public ApplicationDbContext(): base("DefaultConnection", throwIfV1Schema: false)
