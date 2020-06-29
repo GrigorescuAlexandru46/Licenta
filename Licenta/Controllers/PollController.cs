@@ -3,6 +3,7 @@ using Microsoft.AspNet.Identity;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -36,6 +37,7 @@ namespace Licenta.Controllers
             ViewBag.UserIsAdmin = UserIsAdmin();
             ViewBag.UserIsProfileOwner = UserIsProfileOwner(poll.Profile);
 
+            ViewBag.PollIsActive = PollIsActive(poll);
 
             if (TempData.ContainsKey("Message"))
             {
@@ -43,6 +45,17 @@ namespace Licenta.Controllers
             }
             return View(poll);
         }
+
+        [NonAction]
+        public bool PollIsActive(Poll poll)
+        {
+            var activePollList = (from activePoll in db.ActivePolls
+                                   where activePoll.PollId == poll.PollId
+                                   select activePoll
+                                    ).ToList();
+
+            return activePollList.Count > 0 ? true : false;
+        } 
 
         public ActionResult New()
         {
@@ -72,16 +85,30 @@ namespace Licenta.Controllers
                     int answersCount = ConvertStringToInt(form["Question" + i + "_AnswersCount"]);
 
                     question.Text = form["Question" + i + "_Text"];
+                    question.QuestionType = ConvertStringToInt(form["Question" + i + "_Type"]);
                     question.PollId = poll.PollId;
 
                     db.Questions.Add(question);
                     db.SaveChanges();
 
-                    for (int j = 1; j <= answersCount; j++)
+                    if (question.QuestionType != 3)
+                    {
+                        for (int j = 1; j <= answersCount; j++)
+                        {
+                            Answer answer = new Answer();
+
+                            answer.Text = form["Question" + i + "_Answer" + j];
+                            answer.QuestionId = question.QuestionId;
+
+                            db.Answers.Add(answer);
+                            db.SaveChanges();
+                        }
+                    }
+                    else
                     {
                         Answer answer = new Answer();
 
-                        answer.Text = form["Question" + i + "_Answer" + j];
+                        answer.Text = "CustomAnswerText";
                         answer.QuestionId = question.QuestionId;
 
                         db.Answers.Add(answer);
@@ -135,16 +162,30 @@ namespace Licenta.Controllers
                     int answersCount = ConvertStringToInt(form["Question" + i + "_AnswersCount"]);
 
                     question.Text = form["Question" + i + "_Text"];
+                    question.QuestionType = ConvertStringToInt(form["Question" + i + "_Type"]);
                     question.PollId = newPoll.PollId;
 
                     db.Questions.Add(question);
                     db.SaveChanges();
 
-                    for (int j = 1; j <= answersCount; j++)
+                    if (question.QuestionType != 3)
+                    {
+                        for (int j = 1; j <= answersCount; j++)
+                        {
+                            Answer answer = new Answer();
+
+                            answer.Text = form["Question" + i + "_Answer" + j];
+                            answer.QuestionId = question.QuestionId;
+
+                            db.Answers.Add(answer);
+                            db.SaveChanges();
+                        }
+                    }
+                    else
                     {
                         Answer answer = new Answer();
 
-                        answer.Text = form["Question" + i + "_Answer" + j];
+                        answer.Text = "CustomAnswerText";
                         answer.QuestionId = question.QuestionId;
 
                         db.Answers.Add(answer);
@@ -164,12 +205,124 @@ namespace Licenta.Controllers
             }
         }
 
+        public ActionResult ConfirmStart(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            if (UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                return View(poll);
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can start the poll";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        public ActionResult ConfirmStop(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            if (UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                return View(poll);
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can stop the poll";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        [HttpPost]
+        public ActionResult Start(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            if (UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                ActivePoll activePoll = new ActivePoll();
+
+                activePoll.PollId = poll.PollId;
+                db.ActivePolls.Add(activePoll);
+                db.SaveChanges();
+
+                return RedirectToAction("FinishStart", "Poll", new { id = poll.PollId });
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can start the poll";
+                return RedirectToAction("Index", "Home");
+            } 
+        }
+
+        [HttpPost]
+        public ActionResult Stop(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+
+            if (UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                var foundActivePoll = (from activePoll in db.ActivePolls
+                                      where activePoll.PollId == id
+                                      select activePoll
+                                     ).FirstOrDefault();
+
+                db.ActivePolls.Remove(foundActivePoll);
+                db.SaveChanges();
+
+                return RedirectToAction("FinishStop", "Poll", new { id = poll.PollId });
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can stop the poll";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        public ActionResult FinishStart(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            if (UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                return View(poll);
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can start the poll";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        public ActionResult FinishStop(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            if (UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                return View(poll);
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can stop the poll";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
         public ActionResult Fill(int id)
         {
             Poll poll = db.Polls.Find(id);
 
             ViewBag.UserIsAdmin = UserIsAdmin();
             ViewBag.UserIsProfileOwner = UserIsProfileOwner(poll.Profile);
+
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
 
             return View(poll);
         }
@@ -184,25 +337,68 @@ namespace Licenta.Controllers
 
                 for (int i = 1; i <= questionCount; i++)
                 {
-                    Submission submission = new Submission();
-                    int answerCount = ConvertStringToInt(form["Question" + i + "_AnswerCount"]);
-                    string answerText = form["Question" + i + "_Answer"];
+                    int questionType = ConvertStringToInt(form["Question" + i + "_Type"]);
 
-                    submission.SubmissionId = submissionId;
-                    submission.SubmitDate = DateTime.Now;
-
-                    for (int j = 1; j <= answerCount; j++)
+                    if (questionType == 1)
                     {
-                        if (answerText.Equals(form["Question" + i + "_Answer" + j + "_Text"]))
-                        {
-                            submission.AnswerId = ConvertStringToInt(form["Question" + i + "_Answer" + j + "_Id"]);
-                            break;
-                        }
-                    }
+                        int answerCount = ConvertStringToInt(form["Question" + i + "_AnswerCount"]);
+                        string answerText = form["Question" + i + "_Answer"];
 
-                    db.Submissions.Add(submission);
-                    db.SaveChanges();
+                        for (int j = 1; j <= answerCount; j++)
+                        {
+                            if (answerText.Equals(form["Question" + i + "_Answer" + j + "_Text"]))
+                            {
+                                Submission submission = new Submission();
+
+                                submission.SubmissionId = submissionId;
+                                submission.AnswerId = ConvertStringToInt(form["Question" + i + "_Answer" + j + "_Id"]);
+                                submission.SubmitDate = DateTime.Now;
+                                submission.Text = answerText;
+                                submission.QuestionType = questionType;
+                                submission.PollId = poll.PollId;
+
+                                db.Submissions.Add(submission);
+                                break;
+                            }
+                        } 
+                    }
+                    else if (questionType == 2)
+                    {
+                        int answerCount = ConvertStringToInt(form["Question" + i + "_AnswerCount"]);
+
+                        for (int j = 1; j <= answerCount; j++)
+                        {
+                            if (form.AllKeys.Contains("Question" + i + "_Answer" + j + "_Checkbox")) // if checked
+                            {
+                                Submission submission = new Submission();
+
+                                submission.SubmissionId = submissionId;
+                                submission.AnswerId = ConvertStringToInt(form["Question" + i + "_Answer" + j + "_Id"]);
+                                submission.SubmitDate = DateTime.Now;
+                                submission.Text = form["Question" + i + "_Answer" + j + "_Text"];
+                                submission.QuestionType = questionType;
+                                submission.PollId = poll.PollId;
+
+                                db.Submissions.Add(submission);
+                            }
+                        } 
+                    }
+                    else if (questionType == 3)
+                    {
+                        Submission submission = new Submission();
+
+                        submission.SubmissionId = submissionId;
+                        submission.AnswerId = ConvertStringToInt(form["Question" + i + "_Answer_Id"]);
+                        submission.SubmitDate = DateTime.Now;
+                        submission.Text = form["Question" + i + "_CustomAnswer"];
+                        submission.QuestionType = questionType;
+                        submission.PollId = poll.PollId;
+
+                        db.Submissions.Add(submission);
+                    }
                 }
+
+                db.SaveChanges();
 
                 TempData["Message"] = "Answers successfully sent!";
                 return RedirectToAction("Index", "Home");
@@ -210,7 +406,80 @@ namespace Licenta.Controllers
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                TempData["Message"] = "Error. Answers could not be sent!";
                 return RedirectToAction("Fill", "Poll", new { id = poll.PollId });
+            }
+        }
+
+        public ActionResult Results(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            if(UserIsAdmin() || UserIsProfileOwner(poll.Profile))
+            {
+                var submissionList = (from submissionEntity in db.Submissions
+                                      where submissionEntity.PollId == id
+                                      select submissionEntity
+                                     ).ToList();
+
+                var answerSelectedCountMap = new Dictionary<int, int>();
+                foreach (Question question in poll.Questions)
+                {
+                    foreach (Answer answer in question.Answers)
+                    {
+                         answerSelectedCountMap.Add(answer.AnswerId, 0);   
+                    }
+                }
+
+                foreach(Submission submission in submissionList)
+                {
+                    answerSelectedCountMap[submission.AnswerId]++;
+                }
+
+                var customAnswerMap = new Dictionary<int, Dictionary<string, int>>();
+                foreach (Question question in poll.Questions)
+                {
+                    if (question.QuestionType == 3)
+                    {
+                        Dictionary<string, int> answerDetailsMap = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
+
+                        foreach (var submission in submissionList)
+                        {
+                            if (submission.Answer.Question.QuestionId == question.QuestionId)
+                            {
+                                string answerText = submission.Text;
+
+                                if (answerDetailsMap.ContainsKey(answerText))
+                                {
+                                    answerDetailsMap[answerText]++;
+                                }
+                                else
+                                {
+                                    answerDetailsMap.Add(answerText, 1);
+                                }
+                            }
+                        }
+
+                        //var sortedCustomAnswerMap = from entry in customAnswerMap orderby entry.Value descending select entry;
+                        var sortedAnswerDetailsMap = answerDetailsMap.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+                        //customAnswerMap.Add(question.QuestionId, answerDetailsMap);
+                        customAnswerMap.Add(question.QuestionId, sortedAnswerDetailsMap);
+                    }
+                }
+
+                
+
+                ViewBag.AnswerSelectedCountMap = answerSelectedCountMap;
+                ViewBag.SubmissionList = submissionList;
+                ViewBag.CustomAnswerMap = customAnswerMap;
+
+                return View(poll);
+            }
+            else
+            {
+                TempData["Message"] = "Only the creator can see the results of the poll";
+                return RedirectToAction("Index", "Home");
             }
         }
 

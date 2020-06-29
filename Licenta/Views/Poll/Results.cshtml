@@ -1,0 +1,316 @@
+﻿@model Licenta.Models.Poll
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js">
+
+</script>
+
+@{
+    ViewBag.Title = "Results";
+    int i = 1;
+}
+
+<h2>Results</h2>
+<hr />
+
+@foreach (var question in Model.Questions)
+{
+    if (question.QuestionType != 3)
+    {
+        <div class="panel panel-primary">
+            <div class="panel-heading">Question @i</div>
+            <div class="panel-body">
+
+                <div class="row">
+                    <div class="col-lg-11 col-lg-offset-1">
+                        <h3>@question.Text</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <br /><br />
+                    </div>
+                </div>
+
+                <canvas id="chart@(i)" style="width: 100%; height: 60vh"></canvas>
+                <script>
+                    function shuffle(array) {
+                        var currentIndex = array.length, temporaryValue, randomIndex;
+
+                        while (0 !== currentIndex) {
+                            randomIndex = Math.floor(Math.random() * currentIndex);
+                            currentIndex -= 1;
+
+                            temporaryValue = array[currentIndex];
+                            array[currentIndex] = array[randomIndex];
+                            array[randomIndex] = temporaryValue;
+                        }
+
+                        return array;
+                    }
+
+                    var colorList = [
+                        "rgba(255, 99, 132, 0.4)",
+                        "rgba(54, 162, 235, 0.4)",
+                        "rgba(255, 206, 86, 0.4)",
+                        "rgba(75, 192, 192, 0.4)",
+                        "rgba(153, 102, 255, 0.4)",
+                        "rgba(255, 159, 64, 0.4)"
+                    ];
+
+                    shuffle(colorList);
+
+                    var randomizedColors = [];
+                    for (var i = 0; i < @question.Answers.Count; i++) {
+                        randomizedColors.push(colorList[i % colorList.length]);
+                    }
+
+                    var ctx = document.getElementById('chart@(i)');
+                    Chart.defaults.global.responsive = false;
+                    Chart.defaults.global.defaultFontFamily = 'Helvetica';
+                    Chart.defaults.global.defaultFontSize = 18;
+                    Chart.defaults.global.defaultFontColor = 'gray';
+                    Chart.defaults.global.legend.display = false;
+                    var myChart@(i) = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: [
+                                    @foreach (var answer in question.Answers)
+                                    {
+                                        <text>'@answer.Text'</text>
+                                        if(answer != question.Answers.Last())
+                                        {
+                                            <text>, </text>
+                                        }
+                                    }
+                            ],
+                            datasets: [{
+                                data: [
+                                    @foreach (var answer in question.Answers)
+                                    {
+                                        <text>@ViewBag.AnswerSelectedCountMap[answer.AnswerId]</text>
+                                        if(answer != question.Answers.Last())
+                                        {
+                                            <text>, </text>
+                                        }
+                                    }
+                                ],
+
+                                backgroundColor: randomizedColors,
+                                borderColor: randomizedColors,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            },
+                            legend: {
+                                labels: {
+                                    fontColor: 'pink',
+                                }
+                            }
+
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+        <br /><br /><br />
+    }
+    else
+    {
+        <div class="panel panel-primary">
+            <div class="panel-heading">Question @i</div>
+            <div class="panel-body">
+
+                <div class="row">
+                    <div class="col-lg-11 col-lg-offset-1">
+                        <h3>@question.Text</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <br /><br />
+                    </div>
+                </div>
+
+                <canvas id="chart@(i)" style="width: 100%; height: 60vh"></canvas>
+
+                <script>
+                    function sortAsc(unsortedObject) {
+                        var sortedArray = [];
+                        for (var key in unsortedObject) {
+                            sortedArray.push([key, unsortedObject[key]]);
+                        }
+
+                        sortedArray.sort(function (a, b) {
+                            return a[1] - b[1];
+                        });
+
+                        var sortedObject = {};
+                        sortedArray.forEach(function (item) {
+                            sortedObject[item[0]] = item[1]
+                        })
+
+                        return sortedObject;
+                    }
+
+                    function sortDesc(unsortedObject) {
+                        var sortedArray = [];
+                        for (var key in unsortedObject) {
+                            sortedArray.push([key, unsortedObject[key]]);
+                        }
+
+                        sortedArray.sort(function (a, b) {
+                            return b[1] - a[1];
+                        });
+
+                        var sortedObject = {};
+                        sortedArray.forEach(function (item) {
+                            sortedObject[item[0]] = item[1]
+                        })
+
+                        return sortedObject;
+                    }
+
+                    function extractKeysToArray(object) {
+                        var keyArray = [];
+
+                        for (var key in object) {
+                            keyArray.push(key);
+                        }
+
+                        return keyArray;
+                    }
+
+                    function extractValuesToArray(object) {
+                        var valueArray = [];
+
+                        for (var key in object) {
+                            valueArray.push(object[key]);
+                        }
+
+                        return valueArray;
+                    }
+
+                    function nextPage() {
+                        // console.log(myChart.data.labels);
+                        testData = [25, 30, 20, 22, 60, 30, 35, 38, 29, 17];
+                        myChart@(i).data.datasets[0].data = testData;
+                        myChart@(i).update();
+                    }
+
+                    function previousPage(myChart) {
+                        alert("Previous page");
+                    }
+
+                    function shuffle(array) {
+                        var currentIndex = array.length, temporaryValue, randomIndex;
+
+                        while (0 !== currentIndex) {
+                            randomIndex = Math.floor(Math.random() * currentIndex);
+                            currentIndex -= 1;
+
+                            temporaryValue = array[currentIndex];
+                            array[currentIndex] = array[randomIndex];
+                            array[randomIndex] = temporaryValue;
+                        }
+
+                        return array;
+                    }
+
+                    var colorList = [
+                        "rgba(255, 99, 132, 0.4)",
+                        "rgba(54, 162, 235, 0.4)",
+                        "rgba(255, 206, 86, 0.4)",
+                        "rgba(75, 192, 192, 0.4)",
+                        "rgba(153, 102, 255, 0.4)",
+                        "rgba(255, 159, 64, 0.4)"
+                    ];
+
+                    shuffle(colorList);
+
+                    var randomizedColors = [];
+                    for (var i = 0; i < @ViewBag.CustomAnswerMap[question.QuestionId].Count; i++) {
+                        randomizedColors.push(colorList[i % colorList.length]);
+                    }
+
+                    var jsCustomAnswerObject = {
+                    @foreach (var entryAnswer in ViewBag.CustomAnswerMap[question.QuestionId])
+                    {
+                        <text>"@entryAnswer.Key": @entryAnswer.Value, </text>
+                    }
+                    };
+
+                    jsCustomAnswerObject = sortDesc(jsCustomAnswerObject);
+
+                    var keyArray = extractKeysToArray(jsCustomAnswerObject);
+                    var valueArray = extractValuesToArray(jsCustomAnswerObject);
+
+                    var ctx = document.getElementById('chart@(i)');
+                    Chart.defaults.global.responsive = false;
+                    Chart.defaults.global.defaultFontFamily = 'Helvetica';
+                    Chart.defaults.global.defaultFontSize = 18;
+                    Chart.defaults.global.defaultFontColor = 'gray';
+                    Chart.defaults.global.legend.display = false;
+                    var myChart@(i) = new Chart(ctx, {
+                        type: 'horizontalBar',
+                        data: {
+                            labels: keyArray,
+                            datasets: [{
+                                data: valueArray,
+                                backgroundColor: randomizedColors,
+                                borderColor: randomizedColors,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            },
+                            legend: {
+                                labels: {
+                                    fontColor: 'pink',
+                                }
+                            }
+
+                        }
+                    });
+                </script>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <hr />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-4 col-lg-offset-4">
+                        <ul class="pager ">
+                            <li class="previous disabled"><a onclick="previousPage()">&larr; Previous page</a></li>
+                            <li class="next"><a onclick="nextPage()">Next page &rarr;</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                
+
+            </div>
+        </div>
+        <br /><br /><br />
+    }
+
+    i++;
+}
+
+

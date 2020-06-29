@@ -12,6 +12,8 @@ namespace Licenta.Models
         [Key]
         public int QuestionId { get; set; }
 
+        public int QuestionType { get; set; }
+
         public string Text { get; set; }
 
         [ForeignKey("Poll")]

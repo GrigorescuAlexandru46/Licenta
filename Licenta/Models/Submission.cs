@@ -17,6 +17,12 @@ namespace Licenta.Models
         [Column(Order = 2)] 
         public int AnswerId { get; set; }
 
+        public string Text { get; set; }
+
+        public int QuestionType { get; set; }
+
+        public int PollId { get; set; }
+
         public DateTime SubmitDate { get; set; }
 
         [ForeignKey("AnswerId")]

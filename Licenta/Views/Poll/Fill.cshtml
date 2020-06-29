@@ -8,9 +8,9 @@
 
 @if (ViewBag.Message != null)
 {
-    <div class="alert alert-dismissible alert-success">
+    <div class="alert alert-dismissible alert-warning">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <p>@ViewBag.message</p>
+        <p>@ViewBag.Message</p>
     </div>
 }
 
@@ -25,25 +25,68 @@
         <div class="panel panel-primary">
             <div class="panel-heading"></div>
             <div class="panel-body">
+                @Html.Hidden("Question" + i + "_AnswerCount", Model.Questions.ElementAt(i - 1).Answers.Count)
+                @Html.Hidden("Question" + i + "_Type", Model.Questions.ElementAt(i - 1).QuestionType)
                 <div class="row">
                     <div class="col-lg-12">
                         <h4>@i. <span>&nbsp;</span> @question.Text</h4>
                     </div>
                 </div>
-                @Html.Hidden("Question" + i + "_AnswerCount", Model.Questions.ElementAt(i - 1).Answers.Count)
+
                 @{ j = 1; }
-                @foreach (var answer in question.Answers)
+
+                @if (Model.Questions.ElementAt(i - 1).QuestionType != 3)
                 {
-                    @Html.Hidden("Question" + i + "_Answer" + j + "_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).AnswerId)
-                    @Html.Hidden("Question" + i + "_Answer" + j + "_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).Text)
+                    <div class="col-lg-12">
+                        @if (Model.Questions.ElementAt(i - 1).QuestionType == 1)
+                        {
+                            <h6>Choose a single answer</h6>
+                        }
+                        else if (Model.Questions.ElementAt(i - 1).QuestionType == 2)
+                        {
+                            <h6>Choose one or more answers</h6>
+                        }
+                    </div>
+
+                    foreach (var answer in question.Answers)
+                    {
+                        @Html.Hidden("Question" + i + "_Answer" + j + "_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).AnswerId)
+                        @Html.Hidden("Question" + i + "_Answer" + j + "_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).Text)
+
+                        if (Model.Questions.ElementAt(i - 1).QuestionType == 1)
+                        {
+                            <div class="row">
+                                <div class="col-lg-11 col-lg-offset-1">
+                                    @Html.RadioButton("Question" + i + "_Answer", answer.Text)
+                                    <label><span>&nbsp;&nbsp;</span>@answer.Text</label>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                <div class="col-lg-11 col-lg-offset-1">
+                                    <input type="checkbox" name="@("Question" + i + "_Answer" + j + "_Checkbox")" />
+                                    <label><span>&nbsp;&nbsp;</span>@answer.Text</label>
+                                </div>
+                            </div>
+                        }
+                        
+                        j++;
+                    }
+                }
+                else
+                {
+                    @Html.Hidden("Question" + i + "_Answer_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(0).AnswerId)
+                    @Html.Hidden("Question" + i + "_Answer_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(0).Text)
+
                     <div class="row">
-                        <div class="col-lg-11 col-lg-offset-1">
-                            @Html.RadioButton("Question" + i + "_Answer", answer.Text)
-                            <label><span>&nbsp;&nbsp;</span>@answer.Text</label>
+                        <div class="col-lg-12">
+                            <textarea class="form-control" name="@("Question" + i + "_CustomAnswer")" placeholder="Type your answer here" rows="1" style="max-width: 100%; width: 24%; min-height: 42px"></textarea>
                         </div>
                     </div>
-                    j++;
                 }
+
             </div>
         </div>
         i++;

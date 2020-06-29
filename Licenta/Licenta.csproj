@@ -176,6 +176,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\ActivePolls.cs" />
     <Compile Include="Models\Answer.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
@@ -256,6 +257,11 @@
     <Content Include="Views\Profile\ShowPolls.cshtml" />
     <Content Include="Views\Profile\ConfirmDelete.cshtml" />
     <Content Include="Views\Poll\Fill.cshtml" />
+    <Content Include="Views\Poll\ConfirmStart.cshtml" />
+    <Content Include="Views\Poll\FinishStart.cshtml" />
+    <Content Include="Views\Poll\ConfirmStop.cshtml" />
+    <Content Include="Views\Poll\FinishStop.cshtml" />
+    <Content Include="Views\Poll\Results.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

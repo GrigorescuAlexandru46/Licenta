@@ -1,0 +1,48 @@
+﻿@model Licenta.Models.Poll
+
+@{
+    ViewBag.Title = "Confirm poll start";
+}
+
+<h2>@ViewBag.Title</h2>
+<hr />
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h3 class="panel-title">Confirmation</h3>
+
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Are you sure that you want to start this poll?</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h5>
+                    Once you start the poll, it can no longer be edited until you disable it. <br /><br />
+
+                    After confirming the start, you will be provided a link where the poll can be filled. <br />
+                    The link can be accesed anytime from the preview page of the poll.
+                </h5>
+                <hr />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">&nbsp;</div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                @using (Html.BeginForm("Start", "Poll", new { id = Model.PollId }, FormMethod.Post, null))
+                {
+                    <button type="submit" class="btn btn-block btn-success">I am sure, start the poll</button>
+                }
+            </div>
+            <div class="col-md-5 col-md-offset-4">
+                @Html.ActionLink("I've changed my mind, take me back to the poll preview", "Show", "Poll", new { id = Model.PollId }, new { @class = "btn btn-block btn-info" })
+            </div>
+        </div>
+    </div>
+</div>
+
