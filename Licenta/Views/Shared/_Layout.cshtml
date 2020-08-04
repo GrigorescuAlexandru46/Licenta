@@ -7,7 +7,7 @@
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://kit.fontawesome.com/dca0821a34.js" crossorigin="anonymous"></script>
 
 </head>
 <body>
@@ -22,7 +22,7 @@
         </ul>
 
         <button class="navbar-toggler" data-toggle="collapse" data-target="#collapse_target">
-            <span class="fa fa-bars"></span>
+            <span class="fa fa-bars" style="font-size: 2.6rem;"></span>
         </button>
         <div class="collapse navbar-collapse w-100" id="collapse_target">
             <ul class="navbar-nav justify-content-center w-100">
@@ -30,7 +30,7 @@
                     <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fa fa-files-o" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-block">My Polls</span></a>
                 </li>
                 <li class="nav-item mx-2 d-xl-none">
-                    <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fa fa-files-o mr-4" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline">My Polls</span></a>
+                    <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fa fa-files-o ml-1 mr-4" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline pl-1">My Polls</span></a>
                 </li>
                 <li class="nav-item text-center mx-2 d-none d-xl-block">
                     <a href="/Poll/New" class="nav-link"><i class="fa fa-plus-square-o" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Create poll</span></a>
@@ -49,7 +49,7 @@
                         </div>
                     </li>
                     <li class="nav-item dropdown mx-2 d-xl-none">
-                        <a href="#" class="nav-link" id="navbarDropdownSmall" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-unlock-alt mr-3 ml-1 " aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline ml-3">Admin</span></a>
+                        <a href="#" class="nav-link" id="navbarDropdownSmall" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-unlock-alt mr-3 ml-1 " aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline ml-2 pl-1">Admin</span></a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownSmall">
                             @Html.ActionLink("View all profiles", "Index", "Profile", null, new { @class = "dropdown-item" })
                             <div class="dropdown-divider"></div>
