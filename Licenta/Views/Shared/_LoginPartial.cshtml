@@ -6,17 +6,17 @@
         @Html.AntiForgeryToken()
 
         <ul class="nav navbar-nav ml-auto justify-content-end">
-            <li class="nav-item text-center my-auto d-none d-xl-block border-left border-right">
+            <li class="nav-item text-center my-auto d-none d-xl-block">
                 <a class="nav-link active mr-2"><span style="font-size: 0.9rem !important;">Logged in as</span><span class="d-none d-lg-block pt-1 font-weight-bold" style="font-size: 0.9rem !important;">@User.Identity.GetUserName()</span></a>  
             </li>
             <li class="nav-item mr-2 ml-0 my-auto d-xl-none">
                 <a class="nav-link active ml-2 pl-1" style="font-size: 1.3rem !important;">Logged in as @User.Identity.GetUserName()</a> 
             </li>
             <li class="nav-item text-center mx-2 d-none d-xl-block">
-                <a href="/Profile/ShowOwnProfile" class="nav-link"><i class="fa fa-user" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">My profile</span></a>
+                <a href="/Profile/ShowOwnProfile" class="nav-link"><i class="fas fa-user" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">My profile</span></a>
             </li>
             <li class="nav-item mx-2 d-xl-none">
-                <a href="/Profile/ShowOwnProfile" class="nav-link"><i class="fa fa-user mr-4 pl-1" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline pl-1">My profile</span></a>
+                <a href="/Profile/ShowOwnProfile" class="nav-link"><i class="fas fa-user mr-4 pl-1" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline pl-1">My profile</span></a>
             </li>
             <li class="nav-item text-center mx-2 d-none d-xl-block">
                 <a href="javascript:document.getElementById('logoutForm').submit()" class="nav-link"><i class="fas fa-sign-out-alt" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Log out</span></a>
@@ -29,12 +29,18 @@
 }
 else
 {
-    <ul class="navbar-nav ml-auto mr-5">
-        <li class="nav-item active">
-            @Html.ActionLink("Register", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink" })
+    <ul class="nav navbar-nav ml-auto justify-content-end w-100">
+        <li class="nav-item text-center mx-2 d-none d-xl-block">
+            <a href="/Account/Register" class="nav-link"><i class="fas fa-user-plus" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block mr-1">Register</span></a>
         </li>
-        <li class="nav-item">
-            @Html.ActionLink("Log in", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" })
+        <li class="nav-item mx-2 d-xl-none">
+            <a href="/Account/Register" class="nav-link"><i class="fas fa-user-plus mr-3" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline pl-1">Register</span></a>
+        </li>
+        <li class="nav-item text-center mx-2 d-none d-xl-block mr-5">
+            <a href="/Account/Login" class="nav-link"><i class="fas fa-sign-in-alt" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Log in</span></a>
+        </li>
+        <li class="nav-item mx-2 d-xl-none">
+            <a href="/Account/Login" class="nav-link"><i class="fas fa-sign-in-alt mr-4 pl-1" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline pl-1">Login</span></a>
         </li>
     </ul>
 }
