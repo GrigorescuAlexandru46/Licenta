@@ -3,45 +3,46 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - My ASP.NET Application</title>
+    <title>@ViewBag.Title - Online Poll</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="~/Content/fontawesome/css/all.css" rel="stylesheet" />
+    <script defer src="~/Content/fontawesome/js/all.js"></script>
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-xl navbar-dark fixed-top bg-primary justify-content-center">
+    <nav class="navbar navbar-expand-xl navbar-dark fixed-top bg-primary justify-content-center w-100">
         <ul class="nav navbar-nav mr-auto w-50">
             <li class="nav-item active text-center ml-5 text-nowrap d-none d-xl-block">
-                <a href="/Home/Index" class="nav-link navbar-brand"><i class="fa fa-home mr-4 border-bottom" aria-hidden="true" style="font-size: 2.6rem;"></i><span class="font-weight-bold">Home</span></a>
+                <a href="/Home/Index" class="nav-link navbar-brand"><i class="fas fa-home mr-4 border-bottom" aria-hidden="true" style="font-size: 2.6rem;"></i><span class="font-weight-bold">Home</span></a>
             </li>
             <li class="nav-item active ml-2 text-nowrap d-xl-none">
-                <a href="/Home/Index" class="nav-link navbar-brand"><i class="fa fa-home mr-3 border-bottom" aria-hidden="true" style="font-size: 2.6rem;"></i><span class="font-weight-bold">Home</span></a>
+                <a href="/Home/Index" class="nav-link navbar-brand"><i class="fas fa-home mr-3 border-bottom" aria-hidden="true" style="font-size: 2.6rem;"></i><span class="font-weight-bold">Home</span></a>
             </li>
         </ul>
 
         <button class="navbar-toggler" data-toggle="collapse" data-target="#collapse_target">
-            <span class="fa fa-bars"></span>
+            <span class="fa fa-bars" style="font-size: 2.6rem;"></span>
         </button>
         <div class="collapse navbar-collapse w-100" id="collapse_target">
             <ul class="navbar-nav justify-content-center w-100">
                 <li class="nav-item text-center mx-2 d-none d-xl-block">
-                    <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fa fa-files-o" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-block">My Polls</span></a>
+                    <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fas fa-copy" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-block">My Polls</span></a>
                 </li>
                 <li class="nav-item mx-2 d-xl-none">
-                    <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fa fa-files-o mr-4" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline">My Polls</span></a>
+                    <a href="/Profile/ShowOwnPolls" class="nav-link"><i class="fas fa-copy ml-1 mr-4" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline pl-1">My Polls</span></a>
                 </li>
                 <li class="nav-item text-center mx-2 d-none d-xl-block">
-                    <a href="/Poll/New" class="nav-link"><i class="fa fa-plus-square-o" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Create poll</span></a>
+                    <a href="/Poll/New" class="nav-link"><i class="far fa-calendar-plus" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Create poll</span></a>
                 </li>
                 <li class="nav-item mx-2 d-xl-none">
-                    <a href="/Poll/New" class="nav-link"><i class="fa fa-plus-square-o mr-3 ml-1" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline ml-2 pl-1">Create poll</span></a>
+                    <a href="/Poll/New" class="nav-link"><i class="far fa-calendar-plus mr-3 ml-1" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline ml-2 pl-1">Create poll</span></a>
                 </li>
                 @if (User.IsInRole("User"))
                 {
                     <li class="nav-item dropdown text-center mx-2 d-none d-xl-block">
-                        <a href="#" class="nav-link" id="navbarDropdownBig" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-unlock-alt" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Admin</span></a>
+                        <a href="#" class="nav-link" id="navbarDropdownBig" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-unlock-alt" aria-hidden="true" style="font-size: 2rem;"></i><span class="d-none d-lg-block">Admin</span></a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownBig">
                             @Html.ActionLink("View all profiles", "Index", "Profile", null, new { @class = "dropdown-item" })
                             <div class="dropdown-divider"></div>
@@ -49,7 +50,7 @@
                         </div>
                     </li>
                     <li class="nav-item dropdown mx-2 d-xl-none">
-                        <a href="#" class="nav-link" id="navbarDropdownSmall" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-unlock-alt mr-3 ml-1 " aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline ml-3">Admin</span></a>
+                        <a href="#" class="nav-link" id="navbarDropdownSmall" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-unlock-alt mr-3 ml-1 " aria-hidden="true" style="font-size: 2rem;"></i><span class="d-inline ml-2 pl-1">Admin</span></a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownSmall">
                             @Html.ActionLink("View all profiles", "Index", "Profile", null, new { @class = "dropdown-item" })
                             <div class="dropdown-divider"></div>
@@ -62,13 +63,12 @@
             @Html.Partial("_LoginPartial")
         </div>
     </nav>
-    <div class="container body-content">
-        <br />
+    <div id="bodyContainer" class="container body-content">
         <br />
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; @DateTime.Now.Year - Grigorescu Alexandru - Online poll</p>
+            <p class="text-center">&copy; @DateTime.Now.Year - Grigorescu Alexandru - Online poll</p>
         </footer>
     </div>
 
