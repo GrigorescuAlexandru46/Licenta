@@ -1,46 +1,38 @@
 ﻿@model Licenta.Models.Poll
 
-@{
-    ViewBag.Title = "Confirm poll start";
-}
+<br />
 
-<h2>@ViewBag.Title</h2>
-<hr />
-
-<div class="panel panel-primary">
-    <div class="panel-heading">
-        <h3 class="panel-title">Confirmation</h3>
-
+<div class="card bg-light">
+    <div class="card-header">
+        <h2 class="mb-0">Confirmation</h2>
     </div>
-    <div class="panel-body">
+    <div class="card-body ml-2">
         <div class="row">
-            <div class="col-md-12">
-                <h3>Are you sure that you want to start this poll?</h3>
+            <div class="col-12">
+                <h4>Are you sure that you want to start this poll?</h4>
             </div>
         </div>
         <div class="row">
-            <div class="col-md-12">
-                <h5>
+            <div class="col-12">
+                <h6>
                     Once you start the poll, it can no longer be edited until you disable it. <br /><br />
 
                     After confirming the start, you will be provided a link where the poll can be filled. <br />
-                    The link can be accesed anytime from the preview page of the poll.
-                </h5>
-                <hr />
+                    The link can be accessed anytime from the preview page of the poll.
+                </h6>
             </div>
         </div>
+    </div>
+    <div class="card-footer">
         <div class="row">
-            <div class="col-md-12">&nbsp;</div>
-        </div>
-        <div class="row">
-            <div class="col-md-3">
+            <div class="col-12 mb-3 mb-lg-0 col-lg-6">
                 @using (Html.BeginForm("Start", "Poll", new { id = Model.PollId }, FormMethod.Post, null))
                 {
-                    <button type="submit" class="btn btn-block btn-success">I am sure, start the poll</button>
+                    <button type="submit" class="btn btn-block btn-lg btn-success"><h4 class="d-inline mr-4">I am sure, start the poll</h4><i class="fas fa-check d-none d-md-inline" aria-hidden="true" style="font-size: 1.6rem;"></i></button>
                 }
             </div>
-            <div class="col-md-5 col-md-offset-4">
-                @Html.ActionLink("I've changed my mind, take me back to the poll preview", "Show", "Poll", new { id = Model.PollId }, new { @class = "btn btn-block btn-info" })
+            <div class="col-12 col-lg-6">
+                <a href="/Poll/Show/@Model.PollId" class="btn btn-block btn-warning btn-lg"><h4 class="d-inline mr-4">I've changed my mind</h4><i class="fas fa-undo d-none d-md-inline" aria-hidden="true" style="font-size: 1.6rem;"></i></a>
             </div>
         </div>
     </div>

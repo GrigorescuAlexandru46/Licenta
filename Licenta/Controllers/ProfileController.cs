@@ -21,11 +21,15 @@ namespace Licenta.Controllers
 
             ViewBag.ProfilesList = profilesList;
 
-            if (TempData.ContainsKey("Message"))
+            if (!UserIsAdmin())
             {
-                ViewBag.Message = TempData["Message"].ToString();
+                return View();
             }
-            return View();
+            else
+            {
+                TempData["Message"] = "Only an admin can access that page";
+                return RedirectToAction("Index", "Home");
+            }
         }
         public ActionResult Show(int id)
         {
@@ -62,11 +66,19 @@ namespace Licenta.Controllers
                              select poll
                             ).ToList();
 
+            var pollsState = new System.Collections.Generic.Dictionary<int, bool>();
+
+            foreach (Poll poll in pollsList)
+            {
+                pollsState.Add(poll.PollId, PollIsActive(poll));
+            }
+
             ViewBag.UserIsProfileOwner = UserIsProfileOwner(profile);
             ViewBag.UserIsAdmin = UserIsAdmin();
-            ViewBag.PollsList = pollsList;
             ViewBag.Profile = profile;
-
+            ViewBag.PollsList = pollsList;
+            ViewBag.PollsState = pollsState;
+            
             if (TempData.ContainsKey("Message"))
             {
                 ViewBag.Message = TempData["Message"].ToString();
@@ -211,6 +223,17 @@ namespace Licenta.Controllers
             }
 
             return false;
+        }
+
+        [NonAction]
+        public bool PollIsActive(Poll poll)
+        {
+            var activePollList = (from activePoll in db.ActivePolls
+                                  where activePoll.PollId == poll.PollId
+                                  select activePoll
+                                    ).ToList();
+
+            return activePollList.Count > 0 ? true : false;
         }
     }
 }

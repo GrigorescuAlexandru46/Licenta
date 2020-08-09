@@ -502,15 +502,16 @@
 
         // Create the label and append it to the row
         var newLabel = document.createElement("label");
-        newLabel.classList.add("col-lg-2");
-        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("col-8");
+        newLabel.classList.add("offset-2");
         newLabel.classList.add("control-label");
         newLabel.innerHTML = "Answer" + newAnswerId + ":";
         newRow.appendChild(newLabel);
 
         // Create the textarea and append it to the row
         var newTextarea = document.createElement("textarea");
-        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("col-8");
+        newTextarea.classList.add("offset-2");
         newTextarea.classList.add("form-control");
         newTextarea.id = "Question" + questionId + "_Answer" + newAnswerId;
         newTextarea.name = "Question" + questionId + "_Answer" + newAnswerId;
@@ -522,9 +523,10 @@
         // Create the remove answer button and append it to the row
         var newRemoveButton = document.createElement("a");
         newRemoveButton.classList.add("btn");
-        newRemoveButton.classList.add("btn-danger");
-        newRemoveButton.classList.add("col-lg-1");
-        newRemoveButton.classList.add("col-lg-offset-1");
+        newRemoveButton.classList.add("btn-warning");
+        newRemoveButton.classList.add("col-8");
+        newRemoveButton.classList.add("offset-2");
+        newRemoveButton.classList.add("mt-2");
         newRemoveButton.addEventListener("click", function (event) {
             removeAnswer(event.target);
         })
@@ -802,14 +804,12 @@
 
 @using (Html.BeginForm("Edit", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
 {
-    <div class="panel panel-primary">
-        <div class="panel-heading">Poll details</div>
-        <div class="panel-body">
-            <div class="container">
-                <div class="form-group">
-                    @Html.Label("Name", "Name", new { @class = "col-lg-2 control-label" })
-                    @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
-                </div>
+    <div class="card bg-light">
+        <div class="card-header"><h4 class="mb-0 font-weight-bold">Poll details</h4></div>
+        <div class="card-body">
+            <div class="row">
+                @Html.Label("Name", "Poll name:", new { @class = "col-lg-2 control-label font-weight-bold" })
+                @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
             </div>
         </div>
     </div>
@@ -819,9 +819,9 @@
     </div>
     <br />
 
-    <ul class="list-group">
-        <li class="list-group-item active">
-            <h4 class="list-group-item-heading">Questions</h4>
+    <ul class="list-group mt-5">
+        <li class="list-group-item bg-light">
+            <h4 class="list-group-item-heading font-weight-bold">Questions</h4>
         </li>
         <li id="ListItem_AddQuestion" class="list-group-item">
             <div class="row">

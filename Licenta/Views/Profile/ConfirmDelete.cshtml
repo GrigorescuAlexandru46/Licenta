@@ -1,39 +1,37 @@
 ﻿
-@{
-    ViewBag.Title = "Confirm account deletion";
-}
+<br />
 
-<h2>@ViewBag.Title</h2>
-<hr/>
-
-<div class="panel panel-danger">
-    <div class="panel-heading">
-        <h3 class="panel-title">Confirmation</h3>
-        
+<div class="card bg-light">
+    <div class="card-header">
+        <h2 class="card-title mb-0">Confirmation</h2>
     </div>
-    <div class="panel-body">
-        <div class="row">
-            <div class="col-md-12">
-                <h3>Are you sure that you want to delete this account?</h3>
+    <div class="card-body">
+        <div class="row pl-2">
+            <div class="col-xl-9">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <h3>Are you sure that you want to delete this account?</h3>
+                    </div>
+                    <div class="col-xl-12 mt-3">
+                        <h6>All the polls created by this account will also be deleted.<br />Note that this action will make irreversible changes.</h6>
+                    </div>
+                    <div class="col-xl-12 mt-5">
+                        <div class="row">
+                            <div class="col-md-4 col-6">
+                                <form action="/profile/delete/@Model.ProfileId" method="post">
+                                    @Html.HttpMethodOverride(HttpVerbs.Delete)
+                                    <button type="submit" class="btn btn-danger btn-block btn-lg">Delete account</button>
+                                </form>
+                            </div>
+                            <div class="col-md-4 offset-xl-2 col-6 offset-md-4 offset-xs-0">
+                                @Html.ActionLink("Back to profile", "Show", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-info btn-block btn-lg" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <h5>All the polls created by this account will also be deleted.<br />Note that this action will make irreversible changes.</h5>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">&nbsp;</div>
-        </div>
-        <div class="row">
-            <div class="col-md-2">
-                <form action="/profile/delete/@Model.ProfileId" method="post">
-                    @Html.HttpMethodOverride(HttpVerbs.Delete)
-                    <button type="submit" class="btn btn-danger">Delete account</button>
-                </form>
-            </div>
-            <div class="col-md-2">
-                @Html.ActionLink("Back to profile", "Show", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-info" })
+            <div class="col-xl-3 d-none d-xl-block">
+                <i class="fas fa-minus-circle" style="font-size: 12rem;"></i>
             </div>
         </div>
     </div>

@@ -1,9 +1,7 @@
 ﻿@model Licenta.Models.Profile
-@{
-    ViewBag.Title = "Profile edit";
-}
 
-<h2>@ViewBag.Title</h2>
+<br /> 
+<h2>Edit the fields that you wish to change</h2>
 <hr />
 
 @Html.ValidationSummary("", new { @class = "text-danger" })
@@ -26,7 +24,7 @@
                 @Html.TextBox("LastName", Model.LastName, new { @class = "form-control" })
             </div>
         </div>
-
+        
         <div class="form-group">
             @Html.Label("Age", "Age", new { @class = "col-lg-2 control-label" })
             <div class="col-lg-10">
@@ -48,7 +46,7 @@
 
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <input type="submit" class="btn btn-default" value="Edit" />
+                <input type="submit" class="btn btn-info btn-lg btn-block" value="Save changes" />
             </div>
         </div>
     </fieldset>

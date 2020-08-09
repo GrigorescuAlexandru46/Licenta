@@ -21,13 +21,25 @@ namespace Licenta.Controllers
                              select poll
                             ).ToList();
 
-            ViewBag.PollsList = pollsList;
+            var pollsState = new Dictionary<int, bool>();
 
-            if (TempData.ContainsKey("Message"))
+            foreach (Poll poll in pollsList)
             {
-                ViewBag.Message = TempData["Message"].ToString();
+                pollsState.Add(poll.PollId, PollIsActive(poll));
             }
-            return View();
+
+            ViewBag.PollsList = pollsList;
+            ViewBag.PollsState = pollsState;
+
+            if (!UserIsAdmin())
+            {
+                return View();
+            }
+            else
+            {
+                TempData["Message"] = "Only an admin can access that page";
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         public ActionResult Show(int id)

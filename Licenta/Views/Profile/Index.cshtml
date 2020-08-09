@@ -11,20 +11,28 @@
     </div>
 }
 
-<h2>@ViewBag.Title</h2>
+<br />
+<h2 class="text-center">List of all profiles</h2>
 <hr />
 
 <div class="list-group">
     @foreach (var profile in ViewBag.ProfilesList)
     {
-        <a href="/Profile/Show/@profile.ProfileId" class="list-group-item">
-            <label class="badge label label-default">
-                Created at:
-                <br />
-                @profile.CreationDate
-            </label>
-            <h4>@profile.FirstName @profile.LastName</h4>
-            <p>@profile.Email</p>
+        <a href="/Profile/Show/@profile.ProfileId" class="list-group-item list-group-item-action bg-light">
+            <div class="row">
+                <div class="col-12 col-xl-5 my-2 d-inline-flex">
+                    <i class="fas fa-user text-primary mr-3" style="font-size: 2.5rem;"></i>
+                    <h4 class="mb-0 mt-2 ml-1 font-weight-bold text-justify">@profile.FirstName @profile.LastName</h4>
+                </div>
+                <div class="col-12 col-xl-5 d-inline-flex">
+                    <i class="far fa-envelope mt-2 mr-3 text-primary" style="font-size: 2.5rem;"></i>
+                    <h5 class="mb-0 mt-2 pt-2">@profile.Email</h5>
+                </div>
+
+                <div class="col-12 col-xl-2">
+                    <span class="badge badge-primary badge-pill mt-3">Created at: <br /> @profile.CreationDate</span>
+                </div>
+            </div>
         </a>
     }
 </div>

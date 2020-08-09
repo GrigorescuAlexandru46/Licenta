@@ -6,84 +6,69 @@
 
 @if (ViewBag.Message != null)
 {
+    <br />
     <div class="alert alert-dismissible alert-success">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <p>@ViewBag.message</p>
+        <h5 class="mb-0">@ViewBag.message</h5>
     </div>
 }
 
-<h1>@ViewBag.Title</h1>
-<hr />
-
-<div class="panel panel-primary">
-    <div class="panel-heading">Details</div>
-
-    <div class="panel-body">
-        <div class="container">
-            <div class="row">
-                <label class="col-lg-2 control-label">First Name :</label>
-                <label class="col-lg-8 control-label">@Model.FirstName</label>
-            </div>
-            <div class="row">
-                <label class="col-lg-2 control-label">Last Name :</label>
-                <label class="col-lg-8 control-label">@Model.LastName</label>
-            </div>
-            <div class="row">
-                <label class="col-lg-2 control-label">Age :</label>
-                <label class="col-lg-8 control-label">@Model.Age</label>
-            </div>
-            <div class="row">
-                <label class="col-lg-2 control-label">Profile creation date :</label>
-                <label class="col-lg-8 control-label">@Model.CreationDate</label>
-            </div>
-            <div class="row">
-                <label class="col-lg-2 control-label">Polls created : </label>
-                <label class="col-lg-2 control-label">@Model.Polls.Count</label>
-            </div>
-            <br />
-            <div class="row">
-                <div class="col-lg-2 control-label">
-                    @Html.ActionLink("View the polls of this user", "ShowPolls", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-default" })
-                </div>
-            </div>
+<br />
+<div class="card bg-light">
+    <div class="card-header">
+        <h4 class="mb-0 font-weight-bold">Details</h4>
+    </div>
+    <div class="card-body ml-2">
+        <div class="row mb-4">
+            <label class="col-lg-2 col-12 control-label font-weight-bold">First Name :</label>
+            <label class="col-lg-10 col-12 control-label">@Model.FirstName</label>
         </div>
-    </div>
-</div>
-
-<div class="panel panel-primary">
-    <div class="panel-heading">Description</div>
-
-    <div class="panel-body">
-        <p>@Model.Description</p>
-    </div>
-
-</div>
-
-@if (ViewBag.UserIsProfileOwner || ViewBag.UserIsAdmin)
-{
-    <div class="container">
+        <div class="row mb-4">
+            <label class="col-lg-2 col-12 control-label font-weight-bold">Last Name :</label>
+            <label class="col-lg-10 col-12 control-label">@Model.LastName</label>
+        </div>
+        <div class="row mb-4">
+            <label class="col-lg-2 col-12 control-label font-weight-bold">Age :</label>
+            <label class="col-lg-10 col-12 control-label">@Model.Age</label>
+        </div>
+        <div class="row mb-4">
+            <label class="col-lg-2 col-12 control-label font-weight-bold">Profile created at :</label>
+            <label class="col-lg-10 col-12 control-label">@Model.CreationDate</label>
+        </div>
+        <div class="row mb-4">
+            <label class="col-lg-2 col-12 control-label font-weight-bold">Polls created : </label>
+            <label class="col-lg-10 col-12 control-label">@Model.Polls.Count</label>
+        </div>
         <div class="row">
-            <div class="col-md-2">
-                @Html.ActionLink("Edit profile", "Edit", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-info" })
-
-            </div>
-            @if (ViewBag.UserIsProfileOwner)
-            {
-                <div class="col-md-2 col-md-offset-6">
-                    @Html.ActionLink("Change your password", "ChangePassword", "Manage", null, new { @class = "btn btn-warning" })
-                </div>
-                <div class="col-md-2">
-                    @Html.ActionLink("Delete account", "ConfirmDelete", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-danger" })
-                </div>
-            }
-            else
-            {
-                <div class="col-md-2 col-md-offset-8">
-                    @Html.ActionLink("Delete account", "ConfirmDelete", "Profile", new { id = Model.ProfileId }, new { @class = "btn btn-danger" })
-                </div>
-            }
+            <label class="col-lg-2 col-12 control-label font-weight-bold">Description : </label>
+            <label class="col-lg-10 col-12 control-label text-justify">@Model.Description</label>
         </div>
     </div>
-}
+    <div class="card-footer">
+        @if (ViewBag.UserIsProfileOwner || ViewBag.UserIsAdmin)
+        {
+            <div class="row">
+                <div class="col-xl-2 col-lg-3 col-6">
+                    <a href="/Profile/Edit/@Model.ProfileId" class="btn btn-info btn-block btn-lg">Edit profile</a>
+                </div>
+                @if (ViewBag.UserIsProfileOwner)
+                {
+                    <div class="col-xl-3 offset-xl-4 col-lg-4 offset-lg-2 col-6">
+                        <a href="/Manage/ChangePassword" class="btn btn-warning btn-block btn-lg">Change password</a>
+                    </div>
+                    <div class="col-lg-3 col-12 mt-lg-0 mt-2">
+                        <a href="/Profile/ConfirmDelete/@Model.ProfileId" class="btn btn-danger btn-block btn-lg">Delete account</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="col-lg-3 offset-lg-7 col-6">
+                        <a href="/Profile/ConfirmDelete/@Model.ProfileId" class="btn btn-danger btn-block btn-lg">Delete account</a>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
 
 
