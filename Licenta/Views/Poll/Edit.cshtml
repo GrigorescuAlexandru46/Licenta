@@ -18,7 +18,10 @@
             j = 1;
             foreach(var answer in question.Answers)
             {
-                <text>onLoadAddAnswerToQuestion(</text> @i <text>);</text>
+                if (question.QuestionType != 3)
+                { 
+                    <text>onLoadAddAnswerToQuestion(</text> @i <text>);</text>
+                }
                 j++;
             }
 
@@ -237,7 +240,7 @@
             newListItem.appendChild(newRowWithAddAnswerButtonEmpty);
 
         } else {
-
+            
             // Create the row which contains the remove question button and appends it to the question list item
             var newRowWithRemoveCustomQuestionButtonContent = createRowWithRemoveCustomQuestionButtonContent(questionId);
             newListItem.appendChild(newRowWithRemoveCustomQuestionButtonContent);
@@ -258,15 +261,22 @@
 
         // Create the label and append it to the row
         var newLabel = document.createElement("label");
-        newLabel.classList.add("col-lg-2");
-        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("col-10");
+        newLabel.classList.add("col-md-6");
+        newLabel.classList.add("col-lg-6");
+        newLabel.classList.add("offset-2");
+        newLabel.classList.add("offset-md-3");
+        newLabel.classList.add("offset-lg-2");
+        newLabel.classList.add("font-weight-bold");
         newLabel.classList.add("control-label");
         newLabel.innerHTML = "Question text:";
         newRow.appendChild(newLabel);
 
         // Create the textarea and append it to the row
         var newTextarea = document.createElement("textarea");
-        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("col-8");
+        newTextarea.classList.add("offset-2");
+        newTextarea.classList.add("mb-5");
         newTextarea.classList.add("form-control");
         newTextarea.id = "Question" + questionId + "_Text";
         newTextarea.name = "Question" + questionId + "_Text";
@@ -285,15 +295,22 @@
 
         // Create the label and append it to the row
         var newLabel = document.createElement("label");
-        newLabel.classList.add("col-lg-2");
-        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("col-10");
+        newLabel.classList.add("col-md-6");
+        newLabel.classList.add("col-lg-6");
+        newLabel.classList.add("offset-2");
+        newLabel.classList.add("offset-md-2");
+        newLabel.classList.add("font-weight-bold");
         newLabel.classList.add("control-label");
+
         newLabel.innerHTML = "Question text:";
         newRow.appendChild(newLabel);
 
         // Create the textarea and append it to the row
         var newTextarea = document.createElement("textarea");
-        newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("col-8");
+        newTextarea.classList.add("offset-2");
+        newTextarea.classList.add("mb-5");
         newTextarea.classList.add("form-control");
         newTextarea.id = "Question" + questionId + "_Text";
         newTextarea.name = "Question" + questionId + "_Text";
@@ -329,9 +346,16 @@
         // Create the add answer button and append it to the row
         var newAddAnswerButton = document.createElement("a");
         newAddAnswerButton.classList.add("btn");
-        newAddAnswerButton.classList.add("btn-default");
-        newAddAnswerButton.classList.add("col-lg-3");
-        newAddAnswerButton.classList.add("col-lg-offset-2");
+        newAddAnswerButton.classList.add("btn-primary");
+        newAddAnswerButton.classList.add("btn-lg");
+        newAddAnswerButton.classList.add("text-white");
+        newAddAnswerButton.classList.add("mt-5");
+        newAddAnswerButton.classList.add("mb-2");
+        newAddAnswerButton.classList.add("mt-md-5");
+        newAddAnswerButton.classList.add("mb-md-0");
+        newAddAnswerButton.classList.add("col-10");
+        newAddAnswerButton.classList.add("col-md-4");
+        newAddAnswerButton.classList.add("offset-1");
         newAddAnswerButton.innerHTML = "Add answer";
         newAddAnswerButton.addEventListener("click", function (event) {
             var auxQuestionId = extractQuestionId(event.target.parentNode.id)
@@ -343,8 +367,13 @@
         var newRemoveQuestionButton = document.createElement("a");
         newRemoveQuestionButton.classList.add("btn");
         newRemoveQuestionButton.classList.add("btn-danger");
-        newRemoveQuestionButton.classList.add("col-lg-3");
-        newRemoveQuestionButton.classList.add("col-lg-offset-1");
+        newRemoveQuestionButton.classList.add("btn-lg");
+        newRemoveQuestionButton.classList.add("text-white");
+        newRemoveQuestionButton.classList.add("mt-md-5");
+        newRemoveQuestionButton.classList.add("col-10");
+        newRemoveQuestionButton.classList.add("col-md-4");
+        newRemoveQuestionButton.classList.add("offset-1")
+        newRemoveQuestionButton.classList.add("offset-md-2");
         newRemoveQuestionButton.innerHTML = "Remove question";
         newRemoveQuestionButton.addEventListener("click", function (event) {
             removeQuestion(event.target);
@@ -378,10 +407,16 @@
         // Create the add answer button and append it to the row
         var newAddAnswerButton = document.createElement("a");
         newAddAnswerButton.classList.add("btn");
-        newAddAnswerButton.classList.add("btn-default");
+        newAddAnswerButton.classList.add("btn-primary");
+        newAddAnswerButton.classList.add("btn-lg");
         newAddAnswerButton.classList.add("disabled");
-        newAddAnswerButton.classList.add("col-lg-3");
-        newAddAnswerButton.classList.add("col-lg-offset-2");
+        newAddAnswerButton.classList.add("text-white");
+        newAddAnswerButton.classList.add("mb-2");
+        newAddAnswerButton.classList.add("mb-md-0");
+        newAddAnswerButton.classList.add("col-10");
+        newAddAnswerButton.classList.add("col-md-4");
+        newAddAnswerButton.classList.add("offset-1");
+
         newAddAnswerButton.innerHTML = "Add answer";
         newAddAnswerButton.addEventListener("click", function (event) {
             var auxQuestionId = extractQuestionId(event.target.parentNode.id)
@@ -393,8 +428,12 @@
         var newRemoveQuestionButton = document.createElement("a");
         newRemoveQuestionButton.classList.add("btn");
         newRemoveQuestionButton.classList.add("btn-danger");
-        newRemoveQuestionButton.classList.add("col-lg-3");
-        newRemoveQuestionButton.classList.add("col-lg-offset-1");
+        newRemoveQuestionButton.classList.add("btn-lg");
+        newRemoveQuestionButton.classList.add("text-white");
+        newRemoveQuestionButton.classList.add("col-10");
+        newRemoveQuestionButton.classList.add("col-md-4");
+        newRemoveQuestionButton.classList.add("offset-1")
+        newRemoveQuestionButton.classList.add("offset-md-2");
         newRemoveQuestionButton.innerHTML = "Remove question";
         newRemoveQuestionButton.addEventListener("click", function (event) {
             removeQuestion(event.target);
@@ -412,8 +451,9 @@
 
         // Create the label and append it to the row
         var newLabel = document.createElement("label");
-        newLabel.classList.add("col-lg-2");
-        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("col-10");
+        newLabel.classList.add("offset-2");
+        newLabel.classList.add("font-weight-bold");
         newLabel.classList.add("control-label");
         newLabel.innerHTML = "Question type:";
         newRow.appendChild(newLabel);
@@ -463,15 +503,23 @@
 
         // Create the label and append it to the row
         var newLabel = document.createElement("label");
-        newLabel.classList.add("col-lg-2");
-        newLabel.classList.add("col-lg-offset-1");
+        newLabel.classList.add("col-10");
+        newLabel.classList.add("col-lg-1");
+        newLabel.classList.add("offset-2");
+        newLabel.classList.add("offset-md-1");
+        newLabel.classList.add("font-weight-bold");
         newLabel.classList.add("control-label");
         newLabel.innerHTML = "Answer" + newAnswerId + ":";
         newRow.appendChild(newLabel);
 
         // Create the textarea and append it to the row
         var newTextarea = document.createElement("textarea");
+        newTextarea.classList.add("col-8");
+        newTextarea.classList.add("col-md-6");
         newTextarea.classList.add("col-lg-4");
+        newTextarea.classList.add("offset-2");
+        newTextarea.classList.add("offset-md-1");
+        newTextarea.classList.add("offset-lg-1");
         newTextarea.classList.add("form-control");
         newTextarea.id = "Question" + questionId + "_Answer" + newAnswerId;
         newTextarea.name = "Question" + questionId + "_Answer" + newAnswerId;
@@ -482,9 +530,15 @@
         // Create the remove answer button and append it to the row
         var newRemoveButton = document.createElement("a");
         newRemoveButton.classList.add("btn");
-        newRemoveButton.classList.add("btn-danger");
-        newRemoveButton.classList.add("col-lg-1");
-        newRemoveButton.classList.add("col-lg-offset-1");
+        newRemoveButton.classList.add("btn-warning");
+        newRemoveButton.classList.add("text-white");
+        newRemoveButton.classList.add("align-self-center");
+        newRemoveButton.classList.add("col-8");
+        newRemoveButton.classList.add("col-md-3");
+        newRemoveButton.classList.add("offset-2");
+        newRemoveButton.classList.add("offset-md-1");
+        newRemoveButton.classList.add("mt-2");
+        newRemoveButton.classList.add("mt-md-0");
         newRemoveButton.addEventListener("click", function (event) {
             removeAnswer(event.target);
         })
@@ -502,8 +556,11 @@
 
         // Create the label and append it to the row
         var newLabel = document.createElement("label");
-        newLabel.classList.add("col-8");
+        newLabel.classList.add("col-10");
+        newLabel.classList.add("col-lg-1");
         newLabel.classList.add("offset-2");
+        newLabel.classList.add("offset-md-1");
+        newLabel.classList.add("font-weight-bold");
         newLabel.classList.add("control-label");
         newLabel.innerHTML = "Answer" + newAnswerId + ":";
         newRow.appendChild(newLabel);
@@ -511,7 +568,11 @@
         // Create the textarea and append it to the row
         var newTextarea = document.createElement("textarea");
         newTextarea.classList.add("col-8");
+        newTextarea.classList.add("col-md-6");
+        newTextarea.classList.add("col-lg-4");
         newTextarea.classList.add("offset-2");
+        newTextarea.classList.add("offset-md-1");
+        newTextarea.classList.add("offset-lg-1");
         newTextarea.classList.add("form-control");
         newTextarea.id = "Question" + questionId + "_Answer" + newAnswerId;
         newTextarea.name = "Question" + questionId + "_Answer" + newAnswerId;
@@ -524,9 +585,14 @@
         var newRemoveButton = document.createElement("a");
         newRemoveButton.classList.add("btn");
         newRemoveButton.classList.add("btn-warning");
+        newRemoveButton.classList.add("text-white");
+        newRemoveButton.classList.add("align-self-center");
         newRemoveButton.classList.add("col-8");
+        newRemoveButton.classList.add("col-md-3");
         newRemoveButton.classList.add("offset-2");
+        newRemoveButton.classList.add("offset-md-1");
         newRemoveButton.classList.add("mt-2");
+        newRemoveButton.classList.add("mt-md-0");
         newRemoveButton.addEventListener("click", function (event) {
             removeAnswer(event.target);
         })
@@ -601,7 +667,9 @@
 
         // Create the select tag
         var selectTag = document.createElement("select");
-        selectTag.classList.add("col-lg-2");
+        selectTag.classList.add("col-8");
+        selectTag.classList.add("col-md-3");
+        selectTag.classList.add("offset-2");
         selectTag.classList.add("form-control");
 
         selectTag.addEventListener("change", function (event) {
@@ -808,8 +876,8 @@
         <div class="card-header"><h4 class="mb-0 font-weight-bold">Poll details</h4></div>
         <div class="card-body">
             <div class="row">
-                @Html.Label("Name", "Poll name:", new { @class = "col-lg-2 control-label font-weight-bold" })
-                @Html.TextBox("Name", Model.Name, new { @class = "col-lg-2 form-control" })
+                @Html.Label("Name", "Poll name:", new { @class = "col-8 col-md-2 offset-2 offset-md-1 control-label font-weight-bold" })
+                @Html.TextBox("Name", Model.Name, new { @class = "col-8 col-md-7 offset-2 offset-md-1 offset-lg-0 form-control" })
             </div>
         </div>
     </div>
@@ -821,20 +889,20 @@
 
     <ul class="list-group mt-5">
         <li class="list-group-item bg-light">
-            <h4 class="list-group-item-heading font-weight-bold">Questions</h4>
+            <h4 class="list-group-item-heading font-weight-bold mb-0">Questions</h4>
         </li>
         <li id="ListItem_AddQuestion" class="list-group-item">
             <div class="row">
                 <div class="col-lg-12">&nbsp;</div>
             </div>
             <div class="row">
-                <div class="btn-group col-lg-10 col-lg-offset-1">
-                    <a href="#" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Add question &nbsp;<span class="caret"></span></a>
-                    <ul class="dropdown-menu">
-                        <li><a onclick="addQuestion(1);">Single answer</a></li>
-                        <li><a onclick="addQuestion(2);">Multiple answer</a></li>
-                        <li><a onclick="addQuestion(3);">Custom answer</a></li>
-                    </ul>
+                <div class="btn-group col-10 offset-1" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-lg btn-block btn-info py-4 dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 1.7rem;">Add question</button>
+                    <div class="dropdown-menu text-center" aria-labelledby="btnGroupDrop1" style="width: 96%;">
+                        <a class="dropdown-item" onclick="addQuestion(1);">Single answer</a>
+                        <a class="dropdown-item" onclick="addQuestion(2);">Multiple answer</a>
+                        <a class="dropdown-item" onclick="addQuestion(3);">Custom answer</a>
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -846,9 +914,9 @@
     <input id="PollId" name="PollId" type="hidden" value="@Model.PollId" />
     @Html.Hidden("CreationDate", DateTime.Now)
 
-    <div class="form-group">
-        <div class="col-md-3 col-md-offset-4">
-            <input type="submit" class="btn btn-success btn-block" value="Save changes" />
+    <div class="form-group mt-4">
+        <div class="col-4 offset-4">
+            <input type="submit" class="btn btn-success btn-lg btn-block" value="Save changes" />
         </div>
     </div>
 }

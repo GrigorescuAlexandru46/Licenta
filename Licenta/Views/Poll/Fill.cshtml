@@ -14,17 +14,27 @@
     </div>
 }
 
-<h1>@ViewBag.Title</h1>
-<hr />
+<script>
+    window.onload = function () {
+        var navBar = document.getElementById("navBarTopMenu");
+        navBar.parentNode.removeChild(navBar);
+
+        var bodyContainer = document.getElementById("bodyId");
+        bodyContainer.classList.add("border");
+        bodyContainer.classList.add("rounded");
+        bodyContainer.classList.add("px-5");
+        bodyContainer.style.backgroundColor = "lightcyan";
+    }
+</script>
 
 @using (Html.BeginForm("Fill", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
 {
     @Html.Hidden("QuestionCount", Model.Questions.Count)
     foreach (var question in Model.Questions)
     {
-        <div class="panel panel-primary">
-            <div class="panel-heading"></div>
-            <div class="panel-body">
+        <div class="card bg-light mb-5">
+            <div class="card-header"></div>
+            <div class="card-body">
                 @Html.Hidden("Question" + i + "_AnswerCount", Model.Questions.ElementAt(i - 1).Answers.Count)
                 @Html.Hidden("Question" + i + "_Type", Model.Questions.ElementAt(i - 1).QuestionType)
                 <div class="row">
