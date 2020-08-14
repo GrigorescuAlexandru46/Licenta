@@ -1,15 +1,154 @@
 ﻿@model Licenta.Models.Poll
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js">
+</script>
+
+<script>
+
+    window.onload = function () {
+        truncateOptions();
+    }
+
+    function extractQuestionId(stringTagId) {
+
+        var stringMatches = stringTagId.match(/(\d+)/);
+        var stringQuestionId = stringMatches[0];
+
+        var numberQuestionId = parseInt(stringQuestionId, 10);
+        numberQuestionId = isNaN(numberQuestionId) ? 0 : numberQuestionId;
+
+        return numberQuestionId;
+    }
+
+    function truncateOptions() {
+        var optionList = document.getElementsByTagName("option");
+
+        for (let option of optionList) {
+            if (option.innerHTML.length > 35) {
+                option.innerHTML = option.innerHTML.slice(0, 31);
+                option.innerHTML = option.innerHTML.concat(" ...");
+            }  
+        }
+    }
+
+    function shiftArrayToRight(arr, places) {
+        var newArr = arr.slice();
+
+        for (var i = 0; i < places; i++) {
+            newArr.unshift(newArr.pop());
+        }
+
+        return newArr;
+    }
+
+    function compareResults() {
+
+        var comparedQuestionId = event.target.value;
+        var currentQuestionId = extractQuestionId(event.target.id).toString();
+
+        var newDatasetArray = [];
+
+        if (comparedQuestionId == -1) {
+
+            var newRandomizedColors = randomizedColors.slice();
+            shuffle(newRandomizedColors);
+
+            var dataset = {
+                data: [],
+                backgroundColor: newRandomizedColors,
+                borderColor: newRandomizedColors,
+                borderWidth: 1
+            }
+
+            var currentAnswerList = questionsJson[currentQuestionId];
+
+            for (var i = 0; i < currentAnswerList.length; i++) {
+                dataset.data.push(answerCountJson[currentAnswerList[i]]);
+            }
+
+            newDatasetArray.push(dataset);
+            
+        } else {
+
+            var currentAnswerList = questionsJson[currentQuestionId];
+            var comparedAnswerList = questionsJson[comparedQuestionId];
+
+            
+
+            var newRandomizedColors = randomizedColors.slice();
+
+            for (var i = 0; i < comparedAnswerList.length; i++) {
+                var newRandomizedColors = shiftArrayToRight(newRandomizedColors, 1);
+
+                var dataset = {
+                    label: answersJson[comparedAnswerList[i]],
+                    data: [],
+                    backgroundColor: newRandomizedColors,
+                    borderColor: newRandomizedColors,
+                    borderWidth: 1
+                }
+
+                for (var j = 0; j < currentAnswerList.length; j++) {
+                    var combinationKey = comparedAnswerList[i] + '-' + currentAnswerList[j];
+
+                    if (combinationKey in combinationsJson) {
+                        dataset.data.push(combinationsJson[combinationKey]);
+                    } else {
+                        dataset.data.push(0);
+                    }
+                }
+
+                newDatasetArray.push(dataset);
+            }
+        }
+
+        var currentChart = window["myChart" + currentQuestionId];
+        currentChart.data.datasets = newDatasetArray;
+        currentChart.update();
+    }
+
+    var combinationsJson = {
+        @foreach (KeyValuePair<Tuple<int, int>, int> entry in ViewBag.AnswerCombinationCountList)
+        {
+            Tuple<int, int> combination = entry.Key;
+            int count = entry.Value;
+
+            <text>"@combination.Item1-@combination.Item2": @count,</text>
+        }
+    };
+
+    var questionsJson = {
+        @foreach (var question in Model.Questions)
+        {
+            <text>"@(question.QuestionId)": [</text>
+            foreach (var answer in question.Answers)
+            {
+                <text>"@(answer.AnswerId)", </text>
+            }
+            <text>], </text>
+        }
+    }
+
+    var answersJson = {
+        @foreach (var question in Model.Questions)
+        {
+            foreach (var answer in question.Answers)
+            {
+                <text>"@(answer.AnswerId)": "@(answer.Text)",</text>
+            }
+        }
+    };
+
+    var answerCountJson = {
+        @foreach (KeyValuePair<int, int> entry in ViewBag.AnswerSelectedCountMap)
+        {
+            <text>"@(entry.Key)": "@(entry.Value)", </text>
+        }
+    }
 
 </script>
 
 <style>
-    .cut-text {
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-    }
 
     .chartWrapper {
         position: relative;
@@ -63,7 +202,25 @@
                 </div>  
             </div>
 
-            <canvas id="chart@(i)" style="width: 100%; height: 60vh"></canvas>
+            <canvas id="chart@(question.QuestionId)" style="width: 100%; height: 60vh"></canvas>
+
+            <div class="row mt-5">
+                <div class="col-11 offset-1">
+                    <h6 class="font-weight-bold">Compare to question:</h6>
+                </div>
+                <div class="col-11 offset-1">
+                    <select id="selectCompareQuestion@(question.QuestionId)" class="form-control text-truncate">
+                        <option value="-1">None</option>
+                        @foreach (var compareQuestion in Model.Questions)
+                        {
+                            if (compareQuestion.QuestionType == 1 && compareQuestion.QuestionId != question.QuestionId) { 
+                                <option value="@(compareQuestion.QuestionId)">@compareQuestion.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
             <script>
                 function shuffle(array) {
                     var currentIndex = array.length, temporaryValue, randomIndex;
@@ -96,13 +253,16 @@
                     randomizedColors.push(colorList[i % colorList.length]);
                 }
 
-                var ctx = document.getElementById('chart@(i)');
+                var selectCompareQuestion@(question.QuestionId) = document.getElementById("selectCompareQuestion@(question.QuestionId)");
+                selectCompareQuestion@(question.QuestionId).onchange = compareResults;
+
+                var ctx = document.getElementById('chart@(question.QuestionId)');
                 Chart.defaults.global.responsive = false;
                 Chart.defaults.global.defaultFontFamily = 'Helvetica';
                 Chart.defaults.global.defaultFontSize = 18;
                 Chart.defaults.global.defaultFontColor = 'gray';
                 Chart.defaults.global.legend.display = false;
-                var myChart@(i) = new Chart(ctx, {
+                var myChart@(question.QuestionId) = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: [
@@ -115,30 +275,40 @@
                                     }
                                 }
                         ],
-                        datasets: [{
-                            data: [
-                                @foreach (var answer in question.Answers)
-                                {
-                                    <text>@ViewBag.AnswerSelectedCountMap[answer.AnswerId]</text>
-                                    if(answer != question.Answers.Last())
+                        datasets: [
+                            {
+                                data: [
+                                    @foreach (var answer in question.Answers)
                                     {
-                                        <text>, </text>
+                                        <text>@ViewBag.AnswerSelectedCountMap[answer.AnswerId]</text>
+                                        if(answer != question.Answers.Last())
+                                        {
+                                            <text>, </text>
+                                        }
                                     }
-                                }
-                            ],
+                                ],
 
-                            backgroundColor: randomizedColors,
-                            borderColor: randomizedColors,
-                            borderWidth: 1
-                        }]
+                                backgroundColor: randomizedColors,
+                                borderColor: randomizedColors,
+                                borderWidth: 1
+                            }
+                        ]
                     },
                     options: {
+                        responsive: true,
                         scales: {
                             yAxes: [{
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true,
+                                    stepSize: 1
+                                },
+                                stacked: true
+                            }],
+                            xAxes: [
+                            {
+                                    stacked: true
                                 }
-                            }]
+                            ]
                         },
                         legend: {
                             labels: {
@@ -178,7 +348,7 @@
 
             <div class="chartWrapper">
                 <div class="chartAreaWrapper">
-                    <canvas id="chart@(i)" style="width: 100%; height: 60vh"></canvas>
+                    <canvas id="chart@(question.QuestionId)" style="width: 100%; height: 60vh"></canvas>
                 </div>
             </div>
 
@@ -242,8 +412,8 @@
                 function nextPage() {
                     // console.log(myChart.data.labels);
                     testData = [25, 30, 20, 22, 60, 30, 35, 38, 29, 17];
-                    myChart@(i).data.datasets[0].data = testData;
-                    myChart@(i).update();
+                    myChart@(question.QuestionId).data.datasets[0].data = testData;
+                    myChart@(question.QuestionId).update();
                 }
 
                 function previousPage(myChart) {
@@ -293,13 +463,13 @@
                 var keyArray = extractKeysToArray(jsCustomAnswerObject);
                 var valueArray = extractValuesToArray(jsCustomAnswerObject);
 
-                var ctx = document.getElementById('chart@(i)');
+                var ctx = document.getElementById('chart@(question.QuestionId)');
                 Chart.defaults.global.responsive = false;
                 Chart.defaults.global.defaultFontFamily = 'Helvetica';
                 Chart.defaults.global.defaultFontSize = 18;
                 Chart.defaults.global.defaultFontColor = 'gray';
                 Chart.defaults.global.legend.display = false;
-                var myChart@(i) = new Chart(ctx, {
+                var myChart@(question.QuestionId) = new Chart(ctx, {
                     type: 'horizontalBar',
                     data: {
                         labels: keyArray,
@@ -311,6 +481,7 @@
                         }]
                     },
                     options: {
+                        responsive: true,
                         scales: {
                             xAxes: [{
                                 ticks: {

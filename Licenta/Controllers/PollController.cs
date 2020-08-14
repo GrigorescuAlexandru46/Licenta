@@ -480,11 +480,48 @@ namespace Licenta.Controllers
                     }
                 }
 
-                
+                Dictionary<int, List<Submission>> groupedSubmissions = new Dictionary<int, List<Submission>>();
+                foreach (Submission submission in submissionList)
+                {
+                    if (groupedSubmissions.ContainsKey(submission.SubmissionId))
+                    {
+                        groupedSubmissions[submission.SubmissionId].Add(submission);
+                    }
+                    else
+                    {
+                        groupedSubmissions.Add(submission.SubmissionId, new List<Submission>() { submission });
+                    }
+                }
 
+                Dictionary<Tuple<int, int>, int> answerCombinationCountList = new Dictionary<Tuple<int, int>, int>();
+                foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
+                {
+                    List<Submission> groupedSubmissionList = entry.Value;
+
+                    foreach (Submission submission1 in groupedSubmissionList)
+                    {
+                        foreach (Submission submission2 in groupedSubmissionList)
+                        {
+                            if (submission1.AnswerId != submission2.AnswerId && submission1.Answer.QuestionId != submission2.Answer.QuestionId)
+                            {
+                                Tuple<int, int> combination = new Tuple<int, int>(submission1.AnswerId, submission2.AnswerId);
+
+                                if (answerCombinationCountList.ContainsKey(combination)) {
+                                    answerCombinationCountList[combination]++;
+                                }
+                                else
+                                {
+                                    answerCombinationCountList.Add(combination, 1);
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 ViewBag.AnswerSelectedCountMap = answerSelectedCountMap;
                 ViewBag.SubmissionList = submissionList;
                 ViewBag.CustomAnswerMap = customAnswerMap;
+                ViewBag.AnswerCombinationCountList = answerCombinationCountList;
 
                 return View(poll);
             }
