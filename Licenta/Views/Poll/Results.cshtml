@@ -7,6 +7,9 @@
 
     window.onload = function () {
         truncateOptions();
+
+        //setTimeout(updateResults, 3000);
+        setInterval(updateResults, 5000);
     }
 
     function extractQuestionId(stringTagId) {
@@ -27,7 +30,7 @@
             if (option.innerHTML.length > 35) {
                 option.innerHTML = option.innerHTML.slice(0, 31);
                 option.innerHTML = option.innerHTML.concat(" ...");
-            }  
+            }
         }
     }
 
@@ -39,6 +42,146 @@
         }
 
         return newArr;
+    }
+
+    function arrayEquals(a, b) {
+        return Array.isArray(a) &&
+            Array.isArray(b) &&
+            a.length === b.length &&
+            a.every((val, index) => val === b[index]);
+    }
+
+    function countProperties(obj) {
+        var count = 0;
+
+        for (var prop in obj) {
+            if (obj.hasOwnProperty(prop))
+                ++count;
+        }
+
+        return count;
+    }
+
+    function updateResults() {
+        $.ajax({
+            type: "POST",
+            url: "/Poll/UpdateResults/@(Model.PollId)",
+            data: null,
+            dataType: "json",
+            contentType: 'application/json; charset=utf-8',
+            success: function (data) {
+                var dataJson = JSON.parse(data);
+
+                var answerCountJson = dataJson["answerSelectedCountMapJson"];
+                var combinationsJson = dataJson["answerCombinationCountListJson"];
+                var customAnswerCountJson = dataJson["customAnswerMapJson"];
+
+                for (var questionId in questionsJson) {
+                    if (questionsJson.hasOwnProperty(questionId)) {
+                        var select = document.getElementById("selectCompareQuestion" + questionId);
+                        var outdatedChart = window["myChart" + questionId];
+
+                        if (select != null) {
+
+
+                            if (select.value == -1) {
+                                var answerList = questionsJson[questionId];
+                                var newData = [];
+
+                                for (var key in answerList) {
+                                    var answerId = answerList[key];
+                                    var answerCount = answerCountJson[answerId];
+
+                                    newData.push(parseInt(answerCount));
+                                }
+
+                                if (!arrayEquals(outdatedChart.data.datasets[0].data, newData)) {
+                                    outdatedChart.data.datasets[0].data = newData;
+                                    outdatedChart.update();
+                                }
+
+                            }
+                            else {
+                                var currentAnswerList = questionsJson[questionId];
+                                var comparedQuestionId = select.value;
+                                var comparedAnswerList = questionsJson[comparedQuestionId];
+                                var flagUpdate = false;
+
+                                for (var i = 0; i < comparedAnswerList.length; i++) {
+                                    var newData = [];
+
+                                    for (var j = 0; j < currentAnswerList.length; j++) {
+                                        var combinationKey = comparedAnswerList[i] + '-' + currentAnswerList[j];
+
+                                        if (combinationKey in combinationsJson) {
+                                            newData.push(combinationsJson[combinationKey]);
+
+                                        } else {
+                                            newData.push(0);
+                                        }
+                                    }
+
+                                    if (!arrayEquals(outdatedChart.data.datasets[i].data, newData)) {
+                                        outdatedChart.data.datasets[i].data = newData;
+                                        flagUpdate = true;
+                                    }
+
+
+                                }
+
+                                if (flagUpdate == true) {
+                                    outdatedChart.update();
+                                }
+                            }
+                        } else {
+                            // custom question
+                            var customAnswersJson = customAnswerCountJson[questionId];
+                            var newData = [];
+                            var newLabels = [];
+
+                            for (var key in customAnswersJson) {
+                                var answerText = key;
+                                var answerCount = parseInt(customAnswersJson[key]);
+
+                                newLabels.push(answerText);
+                                newData.push(answerCount);
+                            }
+
+                            if (!arrayEquals(outdatedChart.data.datasets[0].data, newData)) {
+                                outdatedChart.data.labels = newLabels;
+                                outdatedChart.data.datasets[0].data = newData;
+
+                                var answerIndex = outdatedChart.data.datasets[0].backgroundColor.length;
+                                var colorIndex = colorList.indexOf(outdatedChart.data.datasets[0].backgroundColor[outdatedChart.data.datasets[0].backgroundColor.length - 1]) + 1;
+
+                                while (answerIndex < countProperties(customAnswersJson)) {
+                                    if (colorIndex == colorList.length) {
+                                        colorIndex = 0;
+                                    }
+                                    outdatedChart.data.datasets[0].backgroundColor.push(colorList[colorIndex]);
+                                    outdatedChart.data.datasets[0].borderColor.push(colorList[colorIndex]);
+
+                                    answerIndex++;
+                                }
+
+                                document.getElementById("chart" + questionId).style.height = (5 * newData.length) + "vh";
+
+                                outdatedChart.update();
+                            }
+                        }
+                    }
+                }
+
+               // currentChart.data.datasets = newDatasetArray;
+               // currentChart.update();
+
+
+
+            },
+            error: function () {
+                alert("There was an error while attempting to update live results")
+            }
+        });
     }
 
     function compareResults() {
@@ -67,13 +210,11 @@
             }
 
             newDatasetArray.push(dataset);
-            
+
         } else {
 
             var currentAnswerList = questionsJson[currentQuestionId];
             var comparedAnswerList = questionsJson[comparedQuestionId];
-
-            
 
             var newRandomizedColors = randomizedColors.slice();
 
@@ -106,6 +247,18 @@
         currentChart.data.datasets = newDatasetArray;
         currentChart.update();
     }
+
+    var customAnswerCountJson = {
+        @foreach (KeyValuePair<int, Dictionary<string, int>> entry in ViewBag.CustomAnswerMap)
+        {
+            <text>"@(entry.Key)": {</text>
+            foreach (KeyValuePair<string, int> internalEntry in entry.Value)
+            {
+                <text>"@(internalEntry.Key)": @(internalEntry.Value), </text>
+            }
+            <text>}, </text>
+        }
+    };
 
     var combinationsJson = {
         @foreach (KeyValuePair<Tuple<int, int>, int> entry in ViewBag.AnswerCombinationCountList)
@@ -144,7 +297,9 @@
         {
             <text>"@(entry.Key)": "@(entry.Value)", </text>
         }
-    }
+    };
+
+
 
 </script>
 
@@ -348,29 +503,11 @@
 
             <div class="chartWrapper">
                 <div class="chartAreaWrapper">
-                    <canvas id="chart@(question.QuestionId)" style="width: 100%; height: 60vh"></canvas>
+                    <canvas id="chart@(question.QuestionId)" style="width: 100%; height: @(5*ViewBag.CustomAnswerMap[question.QuestionId].Count)vh"></canvas>
                 </div>
             </div>
 
             <script>
-                function sortAsc(unsortedObject) {
-                    var sortedArray = [];
-                    for (var key in unsortedObject) {
-                        sortedArray.push([key, unsortedObject[key]]);
-                    }
-
-                    sortedArray.sort(function (a, b) {
-                        return a[1] - b[1];
-                    });
-
-                    var sortedObject = {};
-                    sortedArray.forEach(function (item) {
-                        sortedObject[item[0]] = item[1]
-                    })
-
-                    return sortedObject;
-                }
-
                 function sortDesc(unsortedObject) {
                     var sortedArray = [];
                     for (var key in unsortedObject) {
@@ -407,17 +544,6 @@
                     }
 
                     return valueArray;
-                }
-
-                function nextPage() {
-                    // console.log(myChart.data.labels);
-                    testData = [25, 30, 20, 22, 60, 30, 35, 38, 29, 17];
-                    myChart@(question.QuestionId).data.datasets[0].data = testData;
-                    myChart@(question.QuestionId).update();
-                }
-
-                function previousPage(myChart) {
-                    alert("Previous page");
                 }
 
                 function shuffle(array) {

@@ -544,6 +544,169 @@ namespace Licenta.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [HttpPost]
+        public ActionResult UpdateResults(int id)
+        {
+            Poll poll = db.Polls.Find(id);
+
+            var submissionList = (from submissionEntity in db.Submissions
+                                  where submissionEntity.PollId == id
+                                  select submissionEntity
+                                     ).ToList();
+
+            var answerSelectedCountMap = new Dictionary<int, int>();
+            foreach (Question question in poll.Questions)
+            {
+                foreach (Answer answer in question.Answers)
+                {
+                    answerSelectedCountMap.Add(answer.AnswerId, 0);
+                }
+            }
+
+            foreach (Submission submission in submissionList)
+            {
+                answerSelectedCountMap[submission.AnswerId]++;
+            }
+
+            var customAnswerMap = new Dictionary<int, Dictionary<string, int>>();
+            foreach (Question question in poll.Questions)
+            {
+                if (question.QuestionType == 3)
+                {
+                    Dictionary<string, int> answerDetailsMap = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
+
+                    foreach (var submission in submissionList)
+                    {
+                        if (submission.Answer.Question.QuestionId == question.QuestionId)
+                        {
+                            string answerText = submission.Text;
+
+                            if (answerDetailsMap.ContainsKey(answerText))
+                            {
+                                answerDetailsMap[answerText]++;
+                            }
+                            else
+                            {
+                                answerDetailsMap.Add(answerText, 1);
+                            }
+                        }
+                    }
+
+                    //var sortedCustomAnswerMap = from entry in customAnswerMap orderby entry.Value descending select entry;
+                    var sortedAnswerDetailsMap = answerDetailsMap.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+                    //customAnswerMap.Add(question.QuestionId, answerDetailsMap);
+                    customAnswerMap.Add(question.QuestionId, sortedAnswerDetailsMap);
+                }
+            }
+
+            Dictionary<int, List<Submission>> groupedSubmissions = new Dictionary<int, List<Submission>>();
+            foreach (Submission submission in submissionList)
+            {
+                if (groupedSubmissions.ContainsKey(submission.SubmissionId))
+                {
+                    groupedSubmissions[submission.SubmissionId].Add(submission);
+                }
+                else
+                {
+                    groupedSubmissions.Add(submission.SubmissionId, new List<Submission>() { submission });
+                }
+            }
+
+            Dictionary<Tuple<int, int>, int> answerCombinationCountList = new Dictionary<Tuple<int, int>, int>();
+            foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
+            {
+                List<Submission> groupedSubmissionList = entry.Value;
+
+                foreach (Submission submission1 in groupedSubmissionList)
+                {
+                    foreach (Submission submission2 in groupedSubmissionList)
+                    {
+                        if (submission1.AnswerId != submission2.AnswerId && submission1.Answer.QuestionId != submission2.Answer.QuestionId)
+                        {
+                            Tuple<int, int> combination = new Tuple<int, int>(submission1.AnswerId, submission2.AnswerId);
+
+                            if (answerCombinationCountList.ContainsKey(combination))
+                            {
+                                answerCombinationCountList[combination]++;
+                            }
+                            else
+                            {
+                                answerCombinationCountList.Add(combination, 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Answers count
+            string answerSelectedCountMapJson = "{";
+            foreach (KeyValuePair<int, int> entry in answerSelectedCountMap)
+            {
+                answerSelectedCountMapJson += Surround(entry.Key) + ": " + Surround(entry.Value);
+
+                if (entry.Key != answerSelectedCountMap.Last().Key)
+                {
+                    answerSelectedCountMapJson += ", ";
+                }
+            }
+            answerSelectedCountMapJson += "}";
+
+            // Combinations count
+            string answerCombinationCountListJson = "{";
+            foreach (KeyValuePair<Tuple<int, int>, int> entry in answerCombinationCountList)
+            {
+                answerCombinationCountListJson += Surround(entry.Key.Item1 + "-" + entry.Key.Item2) + ": " + entry.Value;
+
+                if (entry.Key != answerCombinationCountList.Last().Key)
+                {
+                    answerCombinationCountListJson += ", ";
+                }
+            }
+            answerCombinationCountListJson += "}";
+
+            // Custom answers count
+            string customAnswerMapJson = "{";
+            foreach (KeyValuePair<int, Dictionary<string, int>> entry in customAnswerMap)
+            {
+                customAnswerMapJson += Surround(entry.Key) + ": {";
+                foreach (KeyValuePair<string, int> internalEntry in entry.Value)
+                {
+                    customAnswerMapJson += Surround(internalEntry.Key) + ": " + Surround(internalEntry.Value);
+
+                    if (internalEntry.Key != entry.Value.Last().Key)
+                    {
+                        customAnswerMapJson += ", ";
+                    }
+                }
+                customAnswerMapJson += "}";
+
+                if (entry.Key != customAnswerMap.Last().Key)
+                {
+                    customAnswerMapJson += ", ";
+                }
+            }
+            customAnswerMapJson += "}";
+
+            try
+            {
+                // Combine all jsons into one
+                string json = "{" +
+                                Surround("answerSelectedCountMapJson") + ": " + answerSelectedCountMapJson + ", " +
+                                Surround("answerCombinationCountListJson") + ": " + answerCombinationCountListJson + ", " +
+                                Surround("customAnswerMapJson") + ": " + customAnswerMapJson +
+                              "}";
+
+                return Json(json);
+
+            } catch (Exception e)
+            {
+                Console.WriteLine(e);
+                TempData["Message"] = "An error occured while trying to update the results.";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
         [NonAction]
         public Profile GetOwnProfile()
         {
@@ -708,6 +871,12 @@ namespace Licenta.Controllers
 
         [NonAction]
         public string Surround(string text)
+        {
+            return "\"" + text + "\"";
+        }
+
+        [NonAction]
+        public string Surround(int text)
         {
             return "\"" + text + "\"";
         }
