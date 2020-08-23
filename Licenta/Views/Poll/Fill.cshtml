@@ -14,126 +14,155 @@
     </div>
 }
 
-<script>
-    window.onload = function () {
-        var navBar = document.getElementById("navBarTopMenu");
-        navBar.parentNode.removeChild(navBar);
-
-        var bodyContainer = document.getElementById("bodyId");
-        bodyContainer.classList.add("border");
-        bodyContainer.classList.add("rounded");
-        bodyContainer.classList.add("px-5");
-        bodyContainer.style.backgroundColor = "azure";
-    }
-</script>
-
-@using (Html.BeginForm("Fill", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+@if (ViewBag.PollIsActive)
 {
-    @Html.Hidden("QuestionCount", Model.Questions.Count)
-    foreach (var question in Model.Questions)
+    <script>
+        window.onload = function () {
+            var navBar = document.getElementById("navBarTopMenu");
+            navBar.parentNode.removeChild(navBar);
+
+            var bodyContainer = document.getElementById("bodyId");
+            bodyContainer.classList.add("border");
+            bodyContainer.classList.add("rounded");
+            bodyContainer.classList.add("px-5");
+            bodyContainer.style.backgroundColor = "azure";
+
+            $.getJSON('http://gd.geobytes.com/GetCityDetails?callback=?', function (data) {
+                var ipAddress = data["geobytesipaddress"]
+                document.getElementById("IpAddress").value = ipAddress;
+            });
+        }
+    </script>
+
+    using (Html.BeginForm("Fill", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
     {
-        <div class="card bg-light mb-5">
-            <div class="card-header bg-primary"></div>
-            <div class="card-body">
-                @Html.Hidden("Question" + i + "_AnswerCount", Model.Questions.ElementAt(i - 1).Answers.Count)
-                @Html.Hidden("Question" + i + "_Type", Model.Questions.ElementAt(i - 1).QuestionType)
-                <div class="row">
-                    <div class="d-block d-sm-none col-lg-12">
-                        <h6>@i. <span>&nbsp;</span> @question.Text</h6>
-                    </div>
-                    <div class="d-none d-sm-block d-md-none col-lg-12">
-                        <h5>@i. <span>&nbsp;</span> @question.Text</h5>
-                    </div>
-                    <div class="d-none d-md-block col-lg-12">
-                        <h4>@i. <span>&nbsp;</span> @question.Text</h4>
-                    </div>
-                </div>
-
-                @{ j = 1; }
-
-                @if (Model.Questions.ElementAt(i - 1).QuestionType != 3)
-                {
-                    <div class="col-12 ml-0 ml-sm-2 ml-md-4 mb-4">
-                        @if (Model.Questions.ElementAt(i - 1).QuestionType == 1)
-                        {
-                            <div class="d-block d-sm-none col-lg-12">
-                                <h6 style="font-size: 0.7rem;">Choose a single answer</h6>
-                            </div>
-                            <div class="d-none d-sm-block d-md-none col-lg-12">
-                                <h6 style="font-size: 0.9rem;">Choose a single answer</h6>
-                            </div>
-                            <div class="d-none d-md-block col-lg-12">
-                                <h6>Choose a single answer</h6>
-                            </div>
-                        }
-                        else if (Model.Questions.ElementAt(i - 1).QuestionType == 2)
-                        {
-                            <div class="d-block d-sm-none col-lg-12">
-                                <h6 style="font-size: 0.7rem;">Choose one or more answers</h6>
-                            </div>
-                            <div class="d-none d-sm-block d-md-none col-lg-12">
-                                <h6 style="font-size: 0.9rem;">Choose one or more answers</h6>
-                            </div>
-                            <div class="d-none d-md-block col-lg-12">
-                                <h6>Choose one or more answers</h6>
-                            </div>
-                        }
-                    </div>
-
-                    foreach (var answer in question.Answers)
-                    {
-                        @Html.Hidden("Question" + i + "_Answer" + j + "_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).AnswerId)
-                        @Html.Hidden("Question" + i + "_Answer" + j + "_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).Text)
-
-                        if (Model.Questions.ElementAt(i - 1).QuestionType == 1)
-                        {
-                            <div class="row ml-1 ml-sm-2 ml-md-5">
-                                <div class="col-12">
-                                    @Html.RadioButton("Question" + i + "_Answer", answer.Text)
-                                    <label class="mb-0"><span>&nbsp;&nbsp;</span>@answer.Text</label>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="row ml-1 ml-sm-2 ml-md-5">
-                                <div class="col-12">
-                                    <input type="checkbox" name="@("Question" + i + "_Answer" + j + "_Checkbox")" />
-                                    <label><span>&nbsp;&nbsp;</span>@answer.Text</label>
-                                </div>
-                            </div>
-                        }
-                        
-                        j++;
-                    }
-                }
-                else
-                {
-                    @Html.Hidden("Question" + i + "_Answer_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(0).AnswerId)
-                    @Html.Hidden("Question" + i + "_Answer_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(0).Text)
-
-                    <div class="row ml-0 ml-sm-2 ml-md-5 mt-4 mb-2">
-                        <div class="col-12 col-md-7 col-lg-6 col-xl-5">
-                            <textarea class="form-control" name="@("Question" + i + "_CustomAnswer")" placeholder="Type your answer here" rows="1" style="max-width: 100%; min-height: 42px"></textarea>
+        @Html.Hidden("IpAddress", null);
+        @Html.Hidden("QuestionCount", Model.Questions.Count)
+        foreach (var question in Model.Questions)
+        {
+            <div class="card bg-light mb-5">
+                <div class="card-header bg-primary"></div>
+                <div class="card-body">
+                    @Html.Hidden("Question" + i + "_AnswerCount", Model.Questions.ElementAt(i - 1).Answers.Count)
+                    @Html.Hidden("Question" + i + "_Type", Model.Questions.ElementAt(i - 1).QuestionType)
+                    <div class="row">
+                        <div class="d-block d-sm-none col-lg-12">
+                            <h6>@i. <span>&nbsp;</span> @question.Text</h6>
+                        </div>
+                        <div class="d-none d-sm-block d-md-none col-lg-12">
+                            <h5>@i. <span>&nbsp;</span> @question.Text</h5>
+                        </div>
+                        <div class="d-none d-md-block col-lg-12">
+                            <h4>@i. <span>&nbsp;</span> @question.Text</h4>
                         </div>
                     </div>
-                }
 
+                    @{ j = 1; }
+
+                    @if (Model.Questions.ElementAt(i - 1).QuestionType != 3)
+                    {
+                        <div class="col-12 ml-0 ml-sm-2 ml-md-4 mb-4">
+                            @if (Model.Questions.ElementAt(i - 1).QuestionType == 1)
+                            {
+                                <div class="d-block d-sm-none col-lg-12">
+                                    <h6 style="font-size: 0.7rem;">Choose a single answer</h6>
+                                </div>
+                                <div class="d-none d-sm-block d-md-none col-lg-12">
+                                    <h6 style="font-size: 0.9rem;">Choose a single answer</h6>
+                                </div>
+                                <div class="d-none d-md-block col-lg-12">
+                                    <h6>Choose a single answer</h6>
+                                </div>
+                            }
+                            else if (Model.Questions.ElementAt(i - 1).QuestionType == 2)
+                            {
+                                <div class="d-block d-sm-none col-lg-12">
+                                    <h6 style="font-size: 0.7rem;">Choose one or more answers</h6>
+                                </div>
+                                <div class="d-none d-sm-block d-md-none col-lg-12">
+                                    <h6 style="font-size: 0.9rem;">Choose one or more answers</h6>
+                                </div>
+                                <div class="d-none d-md-block col-lg-12">
+                                    <h6>Choose one or more answers</h6>
+                                </div>
+                            }
+                        </div>
+
+                        foreach (var answer in question.Answers)
+                        {
+                            @Html.Hidden("Question" + i + "_Answer" + j + "_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).AnswerId)
+                            @Html.Hidden("Question" + i + "_Answer" + j + "_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(j - 1).Text)
+
+                            if (Model.Questions.ElementAt(i - 1).QuestionType == 1)
+                            {
+                                <div class="row ml-1 ml-sm-2 ml-md-5">
+                                    <div class="col-12">
+                                        @Html.RadioButton("Question" + i + "_Answer", answer.Text)
+                                        <label class="mb-0"><span>&nbsp;&nbsp;</span>@answer.Text</label>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row ml-1 ml-sm-2 ml-md-5">
+                                    <div class="col-12">
+                                        <input type="checkbox" name="@("Question" + i + "_Answer" + j + "_Checkbox")" />
+                                        <label><span>&nbsp;&nbsp;</span>@answer.Text</label>
+                                    </div>
+                                </div>
+                            }
+
+                            j++;
+                        }
+                    }
+                    else
+                    {
+                        @Html.Hidden("Question" + i + "_Answer_Id", Model.Questions.ElementAt(i - 1).Answers.ElementAt(0).AnswerId)
+                        @Html.Hidden("Question" + i + "_Answer_Text", Model.Questions.ElementAt(i - 1).Answers.ElementAt(0).Text)
+
+                        <div class="row ml-0 ml-sm-2 ml-md-5 mt-4 mb-2">
+                            <div class="col-12 col-md-7 col-lg-6 col-xl-5">
+                                <textarea class="form-control" name="@("Question" + i + "_CustomAnswer")" placeholder="Type your answer here" rows="1" style="max-width: 100%; min-height: 42px"></textarea>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            </div>
+            i++;
+        }
+
+        <div class="row mb-5 text-center">
+            <div class="col-12 d-flex justify-content-center">
+                <input type="submit" class="btn btn-info btn-block btn-lg mr-0" value="Submit" />
             </div>
         </div>
-        i++;
+
+        @Html.Hidden("PollId", Model.PollId)
+        @Html.Hidden("Name", Model.Name)
+        @Html.Hidden("OwnerId", Model.OwnerId)
+        @Html.Hidden("CreationDate", Model.CreationDate)
     }
+}
+else
+{
+    <script>
+        window.onload = function () {
+            var navBar = document.getElementById("navBarTopMenu");
+            navBar.parentNode.removeChild(navBar);
 
-    <div class="row mb-5 text-center">
-        <div class="col-12 d-flex justify-content-center">
-            <input type="submit" class="btn btn-info btn-block btn-lg mr-0" value="Submit"/>
-        </div>
+            var bodyContainer = document.getElementById("bodyId");
+            bodyContainer.classList.add("border");
+            bodyContainer.classList.add("rounded");
+            bodyContainer.classList.add("px-5");
+            bodyContainer.style.backgroundColor = "azure";
+        }
+    </script>
+
+    <div class="jumbotron">
+        <h1 class="font-weight-bold mb-5">Inactive poll</h1>
+        <p>The poll you have tried to access has been set inactive by the creator and it can no longer receive submissions.</p>
     </div>
-
-    @Html.Hidden("PollId", Model.PollId)
-    @Html.Hidden("Name", Model.Name)
-    @Html.Hidden("OwnerId", Model.OwnerId)
-    @Html.Hidden("CreationDate", Model.CreationDate)
 }
 
 

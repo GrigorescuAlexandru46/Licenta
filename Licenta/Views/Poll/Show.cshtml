@@ -4,7 +4,9 @@
     window.onload = function () {
         var inputLink = document.getElementById("inputLink");
 
-        inputLink.value = getURL();
+        if (inputLink != null) {
+            inputLink.value = getURL();
+        }     
     }
 
     function copyToClipboard() {

@@ -1,0 +1,640 @@
+﻿@model Licenta.Models.Poll
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<script>
+
+    window.onload = function () {
+        truncateOptions();
+
+        //setTimeout(updateResults, 3000);
+        setInterval(updateResults, 5000);
+    }
+
+    function extractQuestionId(stringTagId) {
+
+        var stringMatches = stringTagId.match(/(\d+)/);
+        var stringQuestionId = stringMatches[0];
+
+        var numberQuestionId = parseInt(stringQuestionId, 10);
+        numberQuestionId = isNaN(numberQuestionId) ? 0 : numberQuestionId;
+
+        return numberQuestionId;
+    }
+
+    function truncateOptions() {
+        var optionList = document.getElementsByTagName("option");
+
+        for (let option of optionList) {
+            if (option.innerHTML.length > 35) {
+                option.innerHTML = option.innerHTML.slice(0, 31);
+                option.innerHTML = option.innerHTML.concat(" ...");
+            }
+        }
+    }
+
+    function shiftArrayToRight(arr, places) {
+        var newArr = arr.slice();
+
+        for (var i = 0; i < places; i++) {
+            newArr.unshift(newArr.pop());
+        }
+
+        return newArr;
+    }
+
+    function arrayEquals(a, b) {
+        return Array.isArray(a) &&
+            Array.isArray(b) &&
+            a.length === b.length &&
+            a.every((val, index) => val === b[index]);
+    }
+
+    function countProperties(obj) {
+        var count = 0;
+
+        for (var prop in obj) {
+            if (obj.hasOwnProperty(prop))
+                ++count;
+        }
+
+        return count;
+    }
+
+    function updateResults() {
+        $.ajax({
+            type: "POST",
+            url: "/Poll/UpdateResults/@(Model.PollId)",
+            data: null,
+            dataType: "json",
+            contentType: 'application/json; charset=utf-8',
+            success: function (data) {
+                var dataJson = JSON.parse(data);
+
+                var answerCountJson = dataJson["answerSelectedCountMapJson"];
+                var combinationsJson = dataJson["answerCombinationCountListJson"];
+                var customAnswerCountJson = dataJson["customAnswerMapJson"];
+
+                for (var questionId in questionsJson) {
+                    if (questionsJson.hasOwnProperty(questionId)) {
+                        var select = document.getElementById("selectCompareQuestion" + questionId);
+                        var outdatedChart = window["myChart" + questionId];
+
+                        if (select != null) {
+
+
+                            if (select.value == -1) {
+                                var answerList = questionsJson[questionId];
+                                var newData = [];
+
+                                for (var key in answerList) {
+                                    var answerId = answerList[key];
+                                    var answerCount = answerCountJson[answerId];
+
+                                    newData.push(parseInt(answerCount));
+                                }
+
+                                if (!arrayEquals(outdatedChart.data.datasets[0].data, newData)) {
+                                    outdatedChart.data.datasets[0].data = newData;
+                                    outdatedChart.update();
+                                }
+
+                            }
+                            else {
+                                var currentAnswerList = questionsJson[questionId];
+                                var comparedQuestionId = select.value;
+                                var comparedAnswerList = questionsJson[comparedQuestionId];
+                                var flagUpdate = false;
+
+                                for (var i = 0; i < comparedAnswerList.length; i++) {
+                                    var newData = [];
+
+                                    for (var j = 0; j < currentAnswerList.length; j++) {
+                                        var combinationKey = comparedAnswerList[i] + '-' + currentAnswerList[j];
+
+                                        if (combinationKey in combinationsJson) {
+                                            newData.push(combinationsJson[combinationKey]);
+
+                                        } else {
+                                            newData.push(0);
+                                        }
+                                    }
+
+                                    if (!arrayEquals(outdatedChart.data.datasets[i].data, newData)) {
+                                        outdatedChart.data.datasets[i].data = newData;
+                                        flagUpdate = true;
+                                    }
+
+
+                                }
+
+                                if (flagUpdate == true) {
+                                    outdatedChart.update();
+                                }
+                            }
+                        } else {
+                            // custom question
+                            var customAnswersJson = customAnswerCountJson[questionId];
+                            var newData = [];
+                            var newLabels = [];
+
+                            for (var key in customAnswersJson) {
+                                var answerText = key;
+                                var answerCount = parseInt(customAnswersJson[key]);
+
+                                newLabels.push(answerText);
+                                newData.push(answerCount);
+                            }
+
+                            if (!arrayEquals(outdatedChart.data.datasets[0].data, newData)) {
+                                outdatedChart.data.labels = newLabels;
+                                outdatedChart.data.datasets[0].data = newData;
+
+                                var answerIndex = outdatedChart.data.datasets[0].backgroundColor.length;
+                                var colorIndex = colorList.indexOf(outdatedChart.data.datasets[0].backgroundColor[outdatedChart.data.datasets[0].backgroundColor.length - 1]) + 1;
+
+                                while (answerIndex < countProperties(customAnswersJson)) {
+                                    if (colorIndex == colorList.length) {
+                                        colorIndex = 0;
+                                    }
+                                    outdatedChart.data.datasets[0].backgroundColor.push(colorList[colorIndex]);
+                                    outdatedChart.data.datasets[0].borderColor.push(colorList[colorIndex]);
+
+                                    answerIndex++;
+                                }
+
+                                document.getElementById("chart" + questionId).style.height = (5 * newData.length) + "vh";
+
+                                outdatedChart.update();
+                            }
+                        }
+                    }
+                }
+
+               // currentChart.data.datasets = newDatasetArray;
+               // currentChart.update();
+
+
+
+            },
+            error: function () {
+                alert("There was an error while attempting to update live results")
+            }
+        });
+    }
+
+    function compareResults() {
+
+        var comparedQuestionId = event.target.value;
+        var currentQuestionId = extractQuestionId(event.target.id).toString();
+
+        var newDatasetArray = [];
+
+        if (comparedQuestionId == -1) {
+
+            var newRandomizedColors = randomizedColors.slice();
+            shuffle(newRandomizedColors);
+
+            var dataset = {
+                data: [],
+                backgroundColor: newRandomizedColors,
+                borderColor: newRandomizedColors,
+                borderWidth: 1
+            }
+
+            var currentAnswerList = questionsJson[currentQuestionId];
+
+            for (var i = 0; i < currentAnswerList.length; i++) {
+                dataset.data.push(answerCountJson[currentAnswerList[i]]);
+            }
+
+            newDatasetArray.push(dataset);
+
+        } else {
+
+            var currentAnswerList = questionsJson[currentQuestionId];
+            var comparedAnswerList = questionsJson[comparedQuestionId];
+
+            var newRandomizedColors = randomizedColors.slice();
+
+            for (var i = 0; i < comparedAnswerList.length; i++) {
+                var newRandomizedColors = shiftArrayToRight(newRandomizedColors, 1);
+
+                var dataset = {
+                    label: answersJson[comparedAnswerList[i]],
+                    data: [],
+                    backgroundColor: newRandomizedColors,
+                    borderColor: newRandomizedColors,
+                    borderWidth: 1
+                }
+
+                for (var j = 0; j < currentAnswerList.length; j++) {
+                    var combinationKey = comparedAnswerList[i] + '-' + currentAnswerList[j];
+
+                    if (combinationKey in combinationsJson) {
+                        dataset.data.push(combinationsJson[combinationKey]);
+                    } else {
+                        dataset.data.push(0);
+                    }
+                }
+
+                newDatasetArray.push(dataset);
+            }
+        }
+
+        var currentChart = window["myChart" + currentQuestionId];
+        currentChart.data.datasets = newDatasetArray;
+        currentChart.update();
+    }
+
+    var customAnswerCountJson = {
+        @foreach (KeyValuePair<int, Dictionary<string, int>> entry in ViewBag.CustomAnswerMap)
+        {
+            <text>"@(entry.Key)": {</text>
+            foreach (KeyValuePair<string, int> internalEntry in entry.Value)
+            {
+                <text>"@(internalEntry.Key)": @(internalEntry.Value), </text>
+            }
+            <text>}, </text>
+        }
+    };
+
+    var combinationsJson = {
+        @foreach (KeyValuePair<Tuple<int, int>, int> entry in ViewBag.AnswerCombinationCountList)
+        {
+            Tuple<int, int> combination = entry.Key;
+            int count = entry.Value;
+
+            <text>"@combination.Item1-@combination.Item2": @count,</text>
+        }
+    };
+
+    var questionsJson = {
+        @foreach (var question in Model.Questions)
+        {
+            <text>"@(question.QuestionId)": [</text>
+            foreach (var answer in question.Answers)
+            {
+                <text>"@(answer.AnswerId)", </text>
+            }
+            <text>], </text>
+        }
+    }
+
+    var answersJson = {
+        @foreach (var question in Model.Questions)
+        {
+            foreach (var answer in question.Answers)
+            {
+                <text>"@(answer.AnswerId)": "@(answer.Text)",</text>
+            }
+        }
+    };
+
+    var answerCountJson = {
+        @foreach (KeyValuePair<int, int> entry in ViewBag.AnswerSelectedCountMap)
+        {
+            <text>"@(entry.Key)": "@(entry.Value)", </text>
+        }
+    };
+
+
+
+</script>
+
+<style>
+
+    .chartWrapper {
+        position: relative;
+    }
+
+        .chartWrapper > canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+        }
+
+    .chartAreaWrapper {
+        height: 60vh;
+        overflow-y: scroll;
+    }
+</style>
+
+@{
+    ViewBag.Title = "Results";
+    int i = 1;
+}
+
+<br />
+<h1 class="text-center display-3 font-weight-bold">Results</h1>
+<hr />
+
+@foreach (var question in Model.Questions)
+{
+    if (question.QuestionType != 3)
+    {
+        <div class="jumbotron">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="text-center font-weight-bold cut-text">Question @i</h1>
+                </div>
+            </div>
+
+            <div class="row mt-5 mb-4 ml-3">
+                <div class="col-12">
+                    <div class="d-block d-sm-none">
+                        <h5 class="font-weight-bold">@question.Text</h5>
+                    </div>
+                    <div class="d-none d-sm-block d-md-none">
+                        <h4 class="text-justify font-weight-bold">@question.Text</h4>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <h3 class="text-justify font-weight-bold">@question.Text</h3>
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="chart@(question.QuestionId)" style="width: 100%; height: 60vh"></canvas>
+
+            <div class="row mt-5">
+                <div class="col-11 offset-1">
+                    <h6 class="font-weight-bold">Compare to question:</h6>
+                </div>
+                <div class="col-11 offset-1">
+                    <select id="selectCompareQuestion@(question.QuestionId)" class="form-control text-truncate">
+                        <option value="-1">None</option>
+                        @foreach (var compareQuestion in Model.Questions)
+                        {
+                            if (compareQuestion.QuestionType == 1 && compareQuestion.QuestionId != question.QuestionId)
+                            {
+                                <option value="@(compareQuestion.QuestionId)">@compareQuestion.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <script>
+                function shuffle(array) {
+                    var currentIndex = array.length, temporaryValue, randomIndex;
+
+                    while (0 !== currentIndex) {
+                        randomIndex = Math.floor(Math.random() * currentIndex);
+                        currentIndex -= 1;
+
+                        temporaryValue = array[currentIndex];
+                        array[currentIndex] = array[randomIndex];
+                        array[randomIndex] = temporaryValue;
+                    }
+
+                    return array;
+                }
+
+                var colorList = [
+                    "rgba(255, 99, 132, 0.4)",
+                    "rgba(54, 162, 235, 0.4)",
+                    "rgba(255, 206, 86, 0.4)",
+                    "rgba(75, 192, 192, 0.4)",
+                    "rgba(153, 102, 255, 0.4)",
+                    "rgba(255, 159, 64, 0.4)"
+                ];
+
+                shuffle(colorList);
+
+                var randomizedColors = [];
+                for (var i = 0; i < @question.Answers.Count; i++) {
+                    randomizedColors.push(colorList[i % colorList.length]);
+                }
+
+                var selectCompareQuestion@(question.QuestionId) = document.getElementById("selectCompareQuestion@(question.QuestionId)");
+                selectCompareQuestion@(question.QuestionId).onchange = compareResults;
+
+                var ctx = document.getElementById('chart@(question.QuestionId)');
+                Chart.defaults.global.responsive = false;
+                Chart.defaults.global.defaultFontFamily = 'Helvetica';
+                Chart.defaults.global.defaultFontSize = 18;
+                Chart.defaults.global.defaultFontColor = 'gray';
+                Chart.defaults.global.legend.display = false;
+                var myChart@(question.QuestionId) = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                                @foreach (var answer in question.Answers)
+                                {
+                                    <text>'@answer.Text'</text>
+                                    if(answer != question.Answers.Last())
+                                    {
+                                        <text>, </text>
+                                    }
+                                }
+                        ],
+                        datasets: [
+                            {
+                                data: [
+                                    @foreach (var answer in question.Answers)
+                                    {
+                                        <text>@ViewBag.AnswerSelectedCountMap[answer.AnswerId]</text>
+                                        if(answer != question.Answers.Last())
+                                        {
+                                            <text>, </text>
+                                        }
+                                    }
+                                ],
+
+                                backgroundColor: randomizedColors,
+                                borderColor: randomizedColors,
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    stepSize: 1
+                                },
+                                stacked: true
+                            }],
+                            xAxes: [
+                            {
+                                    stacked: true
+                                }
+                            ]
+                        },
+                        legend: {
+                            labels: {
+                                fontColor: 'pink',
+                            }
+                        }
+
+                    }
+                });
+            </script>
+        </div>
+
+        <br /><br /><br />
+    }
+    else
+    {
+        <div class="jumbotron">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="text-center font-weight-bold">Question @i</h1>
+                </div>
+            </div>
+
+            <div class="row mt-5 mb-4 ml-3">
+                <div class="col-12">
+                    <div class="d-block d-sm-none">
+                        <h5 class="font-weight-bold">@question.Text</h5>
+                    </div>
+                    <div class="d-none d-sm-block d-md-none">
+                        <h4 class="text-justify font-weight-bold">@question.Text</h4>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <h3 class="text-justify font-weight-bold">@question.Text</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chartWrapper">
+                <div class="chartAreaWrapper">
+                    <canvas id="chart@(question.QuestionId)" style="width: 100%; height: @(5*ViewBag.CustomAnswerMap[question.QuestionId].Count)vh"></canvas>
+                </div>
+            </div>
+
+            <script>
+                function sortDesc(unsortedObject) {
+                    var sortedArray = [];
+                    for (var key in unsortedObject) {
+                        sortedArray.push([key, unsortedObject[key]]);
+                    }
+
+                    sortedArray.sort(function (a, b) {
+                        return b[1] - a[1];
+                    });
+
+                    var sortedObject = {};
+                    sortedArray.forEach(function (item) {
+                        sortedObject[item[0]] = item[1]
+                    })
+
+                    return sortedObject;
+                }
+
+                function extractKeysToArray(object) {
+                    var keyArray = [];
+
+                    for (var key in object) {
+                        keyArray.push(key);
+                    }
+
+                    return keyArray;
+                }
+
+                function extractValuesToArray(object) {
+                    var valueArray = [];
+
+                    for (var key in object) {
+                        valueArray.push(object[key]);
+                    }
+
+                    return valueArray;
+                }
+
+                function shuffle(array) {
+                    var currentIndex = array.length, temporaryValue, randomIndex;
+
+                    while (0 !== currentIndex) {
+                        randomIndex = Math.floor(Math.random() * currentIndex);
+                        currentIndex -= 1;
+
+                        temporaryValue = array[currentIndex];
+                        array[currentIndex] = array[randomIndex];
+                        array[randomIndex] = temporaryValue;
+                    }
+
+                    return array;
+                }
+
+                var colorList = [
+                    "rgba(255, 99, 132, 0.4)",
+                    "rgba(54, 162, 235, 0.4)",
+                    "rgba(255, 206, 86, 0.4)",
+                    "rgba(75, 192, 192, 0.4)",
+                    "rgba(153, 102, 255, 0.4)",
+                    "rgba(255, 159, 64, 0.4)"
+                ];
+
+                shuffle(colorList);
+
+                var randomizedColors = [];
+                for (var i = 0; i < @ViewBag.CustomAnswerMap[question.QuestionId].Count; i++) {
+                    randomizedColors.push(colorList[i % colorList.length]);
+                }
+
+                var jsCustomAnswerObject = {
+                @foreach (var entryAnswer in ViewBag.CustomAnswerMap[question.QuestionId])
+                {
+                    <text>"@entryAnswer.Key": @entryAnswer.Value, </text>
+                }
+                };
+
+                jsCustomAnswerObject = sortDesc(jsCustomAnswerObject);
+
+                var keyArray = extractKeysToArray(jsCustomAnswerObject);
+                var valueArray = extractValuesToArray(jsCustomAnswerObject);
+
+                var ctx = document.getElementById('chart@(question.QuestionId)');
+                Chart.defaults.global.responsive = false;
+                Chart.defaults.global.defaultFontFamily = 'Helvetica';
+                Chart.defaults.global.defaultFontSize = 18;
+                Chart.defaults.global.defaultFontColor = 'gray';
+                Chart.defaults.global.legend.display = false;
+                var myChart@(question.QuestionId) = new Chart(ctx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: keyArray,
+                        datasets: [{
+                            data: valueArray,
+                            backgroundColor: randomizedColors,
+                            borderColor: randomizedColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    stepSize: 1
+                                }
+                            }]
+                        },
+                        legend: {
+                            labels: {
+                                fontColor: 'pink',
+                            }
+                        }
+
+                    }
+                });
+            </script>
+
+
+
+
+        </div>
+        <br /><br /><br />
+    }
+
+    i++;
+}
+
+

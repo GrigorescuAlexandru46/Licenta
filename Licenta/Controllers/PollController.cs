@@ -330,6 +330,7 @@ namespace Licenta.Controllers
 
             ViewBag.UserIsAdmin = UserIsAdmin();
             ViewBag.UserIsProfileOwner = UserIsProfileOwner(poll.Profile);
+            ViewBag.PollIsActive = PollIsActive(poll);
 
             if (TempData.ContainsKey("Message"))
             {
@@ -409,6 +410,10 @@ namespace Licenta.Controllers
                         db.Submissions.Add(submission);
                     }
                 }
+
+                SubmissionIpAddress submissionIpAddress = new SubmissionIpAddress();
+                submissionIpAddress.PollId = poll.PollId;
+                submissionIpAddress.IpAddress = form["IpAddress"];
 
                 db.SaveChanges();
 
@@ -517,12 +522,53 @@ namespace Licenta.Controllers
                         }
                     }
                 }
-                
+
+
+                int submissionCount = (from sub in db.Submissions
+                                      where sub.PollId == poll.PollId
+                                      group sub by sub.SubmissionId into groupedSubs
+                                      select groupedSubs
+                                     ).Count();
+
+                Dictionary<int, double> answerPercentageMap = new Dictionary<int, double>();
+                Dictionary<int, Dictionary<string, double>> customAnswerPercentageMap = new Dictionary<int, Dictionary<string, double>>();
+                foreach (Question question in poll.Questions)
+                {
+                    foreach (Answer answer in question.Answers)
+                    {
+                        if (question.QuestionType != 3)
+                        {
+                            double percentage = (double)answerSelectedCountMap[answer.AnswerId] / submissionCount * 100;
+                            answerPercentageMap.Add(answer.AnswerId, percentage);
+                        }
+                        else
+                        {
+                            Dictionary<string, double> customAnswerTextPercentageMap = new Dictionary<string, double>();
+                            List<string> customAnswerTextList = (from sub in db.Submissions
+                                                                 where sub.AnswerId == answer.AnswerId
+                                                                 select sub.Text
+                                                                ).ToList();
+
+                            foreach (string text in customAnswerTextList)
+                            {
+                                if (!customAnswerTextPercentageMap.ContainsKey(text))
+                                {
+                                    customAnswerTextPercentageMap.Add(text, (double)customAnswerMap[question.QuestionId][text] / submissionCount * 100);
+                                }    
+                            }
+
+                            customAnswerPercentageMap.Add(question.QuestionId, customAnswerTextPercentageMap);
+                        }
+                    }
+                }
+
                 ViewBag.AnswerSelectedCountMap = answerSelectedCountMap;
                 ViewBag.SubmissionList = submissionList;
                 ViewBag.CustomAnswerMap = customAnswerMap;
                 ViewBag.AnswerCombinationCountList = answerCombinationCountList;
-
+                ViewBag.AnswerPercentageMap = answerPercentageMap;
+                ViewBag.CustomAnswerPercentageMap = customAnswerPercentageMap;
+                
                 return View(poll);
             }
             else
@@ -639,11 +685,49 @@ namespace Licenta.Controllers
                 }
             }
 
+            int submissionCount = (from sub in db.Submissions
+                                   where sub.PollId == poll.PollId
+                                   group sub by sub.SubmissionId into groupedSubs
+                                   select groupedSubs
+                                     ).Count();
+
+            Dictionary<int, double> answerPercentageMap = new Dictionary<int, double>();
+            Dictionary<int, Dictionary<string, double>> customAnswerPercentageMap = new Dictionary<int, Dictionary<string, double>>();
+            foreach (Question question in poll.Questions)
+            {
+                foreach (Answer answer in question.Answers)
+                {
+                    if (question.QuestionType != 3)
+                    {
+                        double percentage = (double)answerSelectedCountMap[answer.AnswerId] / submissionCount * 100;
+                        answerPercentageMap.Add(answer.AnswerId, percentage);
+                    }
+                    else
+                    {
+                        Dictionary<string, double> customAnswerTextPercentageMap = new Dictionary<string, double>();
+                        List<string> customAnswerTextList = (from sub in db.Submissions
+                                                             where sub.AnswerId == answer.AnswerId
+                                                             select sub.Text
+                                                            ).ToList();
+
+                        foreach (string text in customAnswerTextList)
+                        {
+                            if (!customAnswerTextPercentageMap.ContainsKey(text))
+                            {
+                                customAnswerTextPercentageMap.Add(text, (double)customAnswerMap[question.QuestionId][text] / submissionCount * 100);
+                            }
+                        }
+
+                        customAnswerPercentageMap.Add(question.QuestionId, customAnswerTextPercentageMap);
+                    }
+                }
+            }
+
             // Answers count
             string answerSelectedCountMapJson = "{";
             foreach (KeyValuePair<int, int> entry in answerSelectedCountMap)
             {
-                answerSelectedCountMapJson += Surround(entry.Key) + ": " + Surround(entry.Value);
+                answerSelectedCountMapJson += Surround(entry.Key) + ": " + entry.Value;
 
                 if (entry.Key != answerSelectedCountMap.Last().Key)
                 {
@@ -651,6 +735,19 @@ namespace Licenta.Controllers
                 }
             }
             answerSelectedCountMapJson += "}";
+
+            // Answers percentage
+            string answerPercentageMapJson = "{";
+            foreach (KeyValuePair<int, double> entry in answerPercentageMap)
+            {
+                answerPercentageMapJson += Surround(entry.Key) + ": " + entry.Value;
+
+                if (entry.Key != answerPercentageMap.Last().Key)
+                {
+                    answerPercentageMapJson += ", ";
+                }
+            }
+            answerPercentageMapJson += "}";
 
             // Combinations count
             string answerCombinationCountListJson = "{";
@@ -672,7 +769,7 @@ namespace Licenta.Controllers
                 customAnswerMapJson += Surround(entry.Key) + ": {";
                 foreach (KeyValuePair<string, int> internalEntry in entry.Value)
                 {
-                    customAnswerMapJson += Surround(internalEntry.Key) + ": " + Surround(internalEntry.Value);
+                    customAnswerMapJson += Surround(internalEntry.Key) + ": " + internalEntry.Value;
 
                     if (internalEntry.Key != entry.Value.Last().Key)
                     {
@@ -688,13 +785,38 @@ namespace Licenta.Controllers
             }
             customAnswerMapJson += "}";
 
+            // Custom answers percentage
+            string customAnswerPercentageMapJson = "{";
+            foreach (KeyValuePair<int, Dictionary<string, double>> entry in customAnswerPercentageMap)
+            {
+                customAnswerPercentageMapJson += Surround(entry.Key) + ": {";
+                foreach (KeyValuePair<string, double> internalEntry in entry.Value)
+                {
+                    customAnswerPercentageMapJson += Surround(internalEntry.Key) + ": " + internalEntry.Value;
+
+                    if (internalEntry.Key != entry.Value.Last().Key)
+                    {
+                        customAnswerPercentageMapJson += ", ";
+                    }
+                }
+                customAnswerPercentageMapJson += "}";
+
+                if (entry.Key != customAnswerPercentageMap.Last().Key)
+                {
+                    customAnswerPercentageMapJson += ", ";
+                }
+            }
+            customAnswerPercentageMapJson += "}";
+            
             try
             {
                 // Combine all jsons into one
                 string json = "{" +
                                 Surround("answerSelectedCountMapJson") + ": " + answerSelectedCountMapJson + ", " +
                                 Surround("answerCombinationCountListJson") + ": " + answerCombinationCountListJson + ", " +
-                                Surround("customAnswerMapJson") + ": " + customAnswerMapJson +
+                                Surround("customAnswerMapJson") + ": " + customAnswerMapJson + ", " +
+                                Surround("answerPercentageMapJson") + ": " + answerPercentageMapJson + ", " +
+                                Surround("customAnswerPercentageMapJson") + ": " + customAnswerPercentageMapJson +
                               "}";
 
                 return Json(json);
