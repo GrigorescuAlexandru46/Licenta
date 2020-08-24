@@ -498,7 +498,7 @@ namespace Licenta.Controllers
                     }
                 }
 
-                Dictionary<Tuple<int, int>, int> answerCombinationCountList = new Dictionary<Tuple<int, int>, int>();
+                Dictionary<Tuple<int, int>, int> answerCombinationCountMap = new Dictionary<Tuple<int, int>, int>();
                 foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
                 {
                     List<Submission> groupedSubmissionList = entry.Value;
@@ -511,12 +511,12 @@ namespace Licenta.Controllers
                             {
                                 Tuple<int, int> combination = new Tuple<int, int>(submission1.AnswerId, submission2.AnswerId);
 
-                                if (answerCombinationCountList.ContainsKey(combination)) {
-                                    answerCombinationCountList[combination]++;
+                                if (answerCombinationCountMap.ContainsKey(combination)) {
+                                    answerCombinationCountMap[combination]++;
                                 }
                                 else
                                 {
-                                    answerCombinationCountList.Add(combination, 1);
+                                    answerCombinationCountMap.Add(combination, 1);
                                 }
                             }
                         }
@@ -543,7 +543,7 @@ namespace Licenta.Controllers
                         }
                         else
                         {
-                            Dictionary<string, double> customAnswerTextPercentageMap = new Dictionary<string, double>();
+                            Dictionary<string, double> customAnswerTextPercentageMap = new Dictionary<string, double>(StringComparer.InvariantCultureIgnoreCase);
                             List<string> customAnswerTextList = (from sub in db.Submissions
                                                                  where sub.AnswerId == answer.AnswerId
                                                                  select sub.Text
@@ -562,13 +562,25 @@ namespace Licenta.Controllers
                     }
                 }
 
+                Dictionary<Tuple<int, int>, double> answerCombinationPercentageMap = new Dictionary<Tuple<int, int>, double>();
+                foreach (KeyValuePair<Tuple<int, int>, int> entry in answerCombinationCountMap)
+                {
+                    Tuple<int, int> combination = new Tuple<int, int>(entry.Key.Item1, entry.Key.Item2);
+                    double percentage = (double)entry.Value / submissionCount * 100;
+
+                    answerCombinationPercentageMap.Add(combination, percentage);
+                }
+
+                ViewBag.SubmissionCount = submissionCount;
                 ViewBag.AnswerSelectedCountMap = answerSelectedCountMap;
                 ViewBag.SubmissionList = submissionList;
                 ViewBag.CustomAnswerMap = customAnswerMap;
-                ViewBag.AnswerCombinationCountList = answerCombinationCountList;
+                ViewBag.AnswerCombinationCountList = answerCombinationCountMap;
                 ViewBag.AnswerPercentageMap = answerPercentageMap;
                 ViewBag.CustomAnswerPercentageMap = customAnswerPercentageMap;
-                
+                ViewBag.AnswerCombinationPercentageMap = answerCombinationPercentageMap;
+
+
                 return View(poll);
             }
             else
@@ -639,10 +651,10 @@ namespace Licenta.Controllers
                     }
 
                     //var sortedCustomAnswerMap = from entry in customAnswerMap orderby entry.Value descending select entry;
-                    var sortedAnswerDetailsMap = answerDetailsMap.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+                    //var sortedAnswerDetailsMap = answerDetailsMap.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
 
-                    //customAnswerMap.Add(question.QuestionId, answerDetailsMap);
-                    customAnswerMap.Add(question.QuestionId, sortedAnswerDetailsMap);
+                    customAnswerMap.Add(question.QuestionId, answerDetailsMap);
+                    //customAnswerMap.Add(question.QuestionId, sortedAnswerDetailsMap);
                 }
             }
 
@@ -721,6 +733,15 @@ namespace Licenta.Controllers
                         customAnswerPercentageMap.Add(question.QuestionId, customAnswerTextPercentageMap);
                     }
                 }
+            }
+
+            Dictionary<Tuple<int, int>, double> answerCombinationPercentageMap = new Dictionary<Tuple<int, int>, double>();
+            foreach (KeyValuePair<Tuple<int, int>, int> entry in answerCombinationCountList)
+            {
+                Tuple<int, int> combination = new Tuple<int, int>(entry.Key.Item1, entry.Key.Item2);
+                double percentage = (double)entry.Value / submissionCount * 100;
+
+                answerCombinationPercentageMap.Add(combination, percentage);
             }
 
             // Answers count
@@ -807,16 +828,31 @@ namespace Licenta.Controllers
                 }
             }
             customAnswerPercentageMapJson += "}";
-            
+
+            // Combinations percentage
+            string answerCombinationPercentageMapJson = "{";
+            foreach (KeyValuePair<Tuple<int, int>, double> entry in answerCombinationPercentageMap)
+            {
+                answerCombinationPercentageMapJson += Surround(entry.Key.Item1 + "-" + entry.Key.Item2) + ": " + entry.Value;
+
+                if (entry.Key != answerCombinationPercentageMap.Last().Key)
+                {
+                    answerCombinationPercentageMapJson += ", ";
+                }
+            }
+            answerCombinationPercentageMapJson += "}";
+
             try
             {
                 // Combine all jsons into one
                 string json = "{" +
+                                Surround("submissionCount") + ": " + submissionCount + ", " +
                                 Surround("answerSelectedCountMapJson") + ": " + answerSelectedCountMapJson + ", " +
                                 Surround("answerCombinationCountListJson") + ": " + answerCombinationCountListJson + ", " +
                                 Surround("customAnswerMapJson") + ": " + customAnswerMapJson + ", " +
                                 Surround("answerPercentageMapJson") + ": " + answerPercentageMapJson + ", " +
-                                Surround("customAnswerPercentageMapJson") + ": " + customAnswerPercentageMapJson +
+                                Surround("customAnswerPercentageMapJson") + ": " + customAnswerPercentageMapJson + ", " +
+                                Surround("answerCombinationPercentageMapJson") + ": " + answerCombinationPercentageMapJson +
                               "}";
 
                 return Json(json);

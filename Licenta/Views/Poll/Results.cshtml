@@ -2,9 +2,11 @@
 
 @{ int i = 1; }
 
-<script src="https://d3js.org/d3.v4.js"></script>
+<script src="/Content/d3/d3.js"></script>
 
 <script>
+    var submissionCount = @ViewBag.SubmissionCount;
+
     var questionsJson = {
         @foreach (var question in Model.Questions)
         {
@@ -80,6 +82,16 @@
             int count = entry.Value;
 
             <text>"@combination.Item1-@combination.Item2": @count,</text>
+        }
+    };
+
+    var combinationsPercentageJson = {
+        @foreach (KeyValuePair<Tuple<int, int>, double> entry in ViewBag.AnswerCombinationPercentageMap)
+        {
+            Tuple<int, int> combination = entry.Key;
+            double percentage = entry.Value;
+
+            <text>"@combination.Item1-@combination.Item2": @percentage,</text>
         }
     };
 </script>
@@ -175,32 +187,37 @@
 </script>
 
 <script>
+    var globalMargin = {};
+    var globalWidth = 0;
+    var globalHeight = 0;
+    var globalChartDimensions = {};
+
     window.onload = function () {
         //truncateOptions();
 
+        // Create chart dimensions object
+        var firstQuestionId = Object.keys(questionsJson)[0];
+        var tempDivChart = document.getElementById("divChart" + firstQuestionId);
+        tempDivChart.style.height = "60vh";
+        globalMargin = { top: 30, right: 30, bottom: 70, left: 60 };
+        globalWidth = tempDivChart.offsetWidth - globalMargin.left - globalMargin.right;
+        globalHeight = tempDivChart.offsetHeight - globalMargin.top - globalMargin.bottom;
+        globalChartDimensions = { "margin": globalMargin, "width": globalWidth, "height": globalHeight };
+        
         // Create all charts
         for (var questionId in questionsJson) {
             if (questionsJson.hasOwnProperty(questionId)) {
-
-                var divChart = document.getElementById("divChart" + questionId);
-
-                // Set chart dimensions
-                divChart.style.height = "60vh";
-                var margin = { top: 30, right: 30, bottom: 70, left: 60 };
-                var width = divChart.offsetWidth - margin.left - margin.right;
-                var height = divChart.offsetHeight - margin.top - margin.bottom;
-                var chartDimensions = { "margin": margin, "width": width, "height": height };
-
                 // Create chart
                 if (questionsTypeJson[questionId] != 3) {
-                    createBarChart("#divChart" + questionId, gatherData(questionId), chartDimensions);
+                    createBarChart(questionId, gatherData(questionId), globalChartDimensions);
                 }
             }
         }
 
-        //setTimeout(updateResults, 3000);
-        //setTimeout(updateResults, 3000);
-        setInterval(updateResults, 5000);
+        setTimeout(updateResults, 3000);
+        //setInterval(updateResults, 5000); 
+        //setTimeout(removeChart, 2000, 1);
+        //setTimeout(function () { createBarChartCompare(1, gatherDataCompare(1, 2), globalChartDimensions); }, 3000);
     }   
 
     function gatherData(questionId) {
@@ -217,6 +234,32 @@
         return data;
     }
 
+    function gatherDataCompare(currentQuestionId, comparedQuestionId) {
+        var data = [];
+
+        questionsJson[currentQuestionId].forEach(function (currentAnswerId) {
+            var obj = {};
+
+            obj.group = answersJson[currentAnswerId];
+            questionsJson[comparedQuestionId].forEach(function (comparedAnswerId) {
+                obj[answersJson[comparedAnswerId]] = {
+                    value: combinationsJson[currentAnswerId + "-" + comparedAnswerId],
+                    percentage: combinationsPercentageJson[currentAnswerId + "-" + comparedAnswerId]
+                };
+            });
+
+            data.push(obj);
+        });
+
+        data.columns = [];
+        data.columns.push("group");
+        questionsJson[comparedQuestionId].forEach(function (comparedAnswerId) {
+            data.columns.push(answersJson[comparedAnswerId]);
+        });
+
+        return data;
+    }
+
     function calculateTicks(max) {
         if (max == 1) { return 1; }
         if (max < 5) { return 2; }
@@ -224,17 +267,20 @@
         return 10;
     }
 
-    function createBarChart(divChartId, receivedData, chartDimensions) {
-        // Get maximum answer count (will be used below)
-        var maxAnswerCount = Math.max.apply(Math, receivedData.map(function (d) { return d.answerCount; }));
+    function removeChart(questionId) {
+        var divChart = document.getElementById("divChart" + questionId);
 
+        divChart.innerHTML = "";
+    }
+
+    function createBarChart(questionId, receivedData, chartDimensions) {
         // Set dimensions
         var margin = chartDimensions["margin"];
         var width = chartDimensions["width"];
         var height = chartDimensions["height"];
 
         // Create Svg and group
-        var svg = d3.select(divChartId)
+        var svg = d3.select("#divChart" + questionId)
             .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -258,12 +304,12 @@
 
         // Create and append Y axis
         var yAxis = d3.scaleLinear()
-            .domain([0, maxAnswerCount])
+            .domain([0, submissionCount])
             .range([height, 0]);
         svg.append("g")
             .attr("class", "y-axis")
             .call(d3.axisLeft(yAxis)
-                .ticks(calculateTicks(maxAnswerCount))
+                .ticks(calculateTicks(submissionCount))
                 .tickFormat(d3.format("d")));
 
         // create a tooltip
@@ -310,7 +356,7 @@
         svg.selectAll(".barGroup").data(receivedData)
             .append("text")
                 .attr("x", function (d) { return xAxis(d.answerText) + xAxis.bandwidth() / 2; })
-                .attr("y", function (d) { return yAxis(d.answerCount - (maxAnswerCount / 7)); })
+                .attr("y", function (d) { return yAxis(d.answerCount - (submissionCount / 7)); })
                 .attr("font-size", "2vw")
                 .attr("text-anchor", "middle")
                 .attr("font-family", "cursive")
@@ -318,20 +364,14 @@
                 .style("opacity", 0)
                 .style("pointer-events", "none")
                 .text(function (d) { return (d.answerCount > 0 ? Math.round(answersPercentageJson[d.answerId]) + "%" : ""); })
-                .on("mouseover", function (d) { return tooltip.style("visibility", "visible").html(d.answerText + ": " + d.answerCount); })
-                .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
-                .on("mouseout", function (d) { return tooltip.style("visibility", "hidden").html(""); })
                 .transition().duration(1500)
                     .delay(1500)
                     .style("opacity", 1.0);
     }
 
-    function updateBarChart(divChartId, receivedData, chartDimensions) {
-        // Get maximum answer count (will be used below)
-        var maxAnswerCount = Math.max.apply(Math, receivedData.map(function (d) { return d.answerCount; }));
-
+    function updateBarChart(questionId, receivedData, chartDimensions) {
         // Select svg
-        var svg = d3.select(divChartId).select("svg");
+        var svg = d3.select("#divChart" + questionId).select("svg");
 
         // Select the outdated Y axis
         var outdatedYaxis = svg.select("g.y-axis");
@@ -342,14 +382,14 @@
 
         // Create new Y axis
         var newYaxis = d3.scaleLinear()
-            .domain([0, maxAnswerCount])
+            .domain([0, submissionCount])
             .range([height, 0]);
 
         // Update Y axis
         outdatedYaxis
             .transition().duration(1500)
             .call(d3.axisLeft(newYaxis)
-                .ticks(calculateTicks(maxAnswerCount))
+                .ticks(calculateTicks(submissionCount))
                 .tickFormat(d3.format("d")));
 
         // Update values
@@ -363,9 +403,138 @@
         svg.selectAll(".barGroup").data(receivedData)
             .select("text")
             .transition().duration(1500)
-            .attr("y", function (d) { return newYaxis(d.answerCount - (maxAnswerCount / 7)); })
+            .attr("y", function (d) { return newYaxis(d.answerCount - (submissionCount / 7)); })
             .text(function (d) { return (d.answerCount > 0 ? Math.round(answersPercentageJson[d.answerId]) + "%" : ""); });
     };
+
+    function createBarChartCompare(questionId, receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChart" + questionId)
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // List of subgroups
+        var subgroups = receivedData.columns.slice(1);
+
+        // List of groups = I show them on the X axis
+        var groups = d3.map(receivedData, function (d) { return (d.group) }).keys();
+
+        // Add X axis
+        var x = d3.scaleBand()
+            .domain(groups)
+            .range([0, width])
+            .padding([0.2])
+        svg.append("g")
+            .attr("class", "x-axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x).tickSize(0))
+            .selectAll("text")
+            .attr("class", "font-weight-bold")
+            .attr("transform", "translate(-10,0)rotate(-45)")
+            .style("text-anchor", "end")
+            .style("font-size", "1rem");
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+            .domain([0, submissionCount])
+            .range([height, 0]);
+        svg.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y)
+                .ticks(calculateTicks(submissionCount))
+                .tickFormat(d3.format("d")));
+
+        // Another scale for subgroup position?
+        var xSubgroup = d3.scaleBand()
+            .domain(subgroups)
+            .range([0, x.bandwidth()])
+            .padding([0.05])
+
+        // color palette = one color per subgroup
+        var colorFill = d3.scaleOrdinal()
+            .domain(subgroups)
+            .range(["rgb(255, 0, 0, 0.5)", "rgb(0, 102, 255, 0.5)", "rgb(51, 204, 51, 0.5)", "rgb(255, 204, 0, 0.5)", "rgb(153, 51, 255, 0.5)", "rgb(102, 255, 255, 0.5)", "rgb(204, 153, 255, 0.5)", "rgb(0, 102, 102, 0.5)", "rgb(153, 204, 0, 0.5)", "rgb(102, 51, 0, 0.5)", "rgb(255, 51, 204, 0.5)", "rgb(153, 204, 255, 0.5)", "rgb(153, 255, 153, 0.5)", "rgb(204, 51, 0, 0.5)", "rgb(0, 0, 102, 0.5)", "rgb(153, 102, 0, 0.5)", "rgb(0, 102, 34, 0.5)", "rgb(102, 102, 153, 0.5)", "rgb(255, 255, 77, 0.5)", "rgb(255, 153, 255, 0.5)"]);
+
+        // border color palette = one color per subgroup
+        var colorBorder = d3.scaleOrdinal()
+            .domain(subgroups)
+            .range(["rgb(255, 0, 0, 1.0)", "rgb(0, 102, 255, 1.0)", "rgb(51, 204, 51, 1.0)", "rgb(255, 204, 0, 1.0)", "rgb(153, 51, 255, 1.0)", "rgb(102, 255, 255, 1.0)", "rgb(204, 153, 255, 1.0)", "rgb(0, 102, 102, 1.0)", "rgb(153, 204, 0, 1.0)", "rgb(102, 51, 0, 1.0)", "rgb(255, 51, 204, 1.0)", "rgb(153, 204, 255, 1.0)", "rgb(153, 255, 153, 1.0)", "rgb(204, 51, 0, 1.0)", "rgb(0, 0, 102, 1.0)", "rgb(153, 102, 0, 1.0)", "rgb(0, 102, 34, 1.0)", "rgb(102, 102, 153, 1.0)", "rgb(255, 255, 77, 1.0)", "rgb(255, 153, 255, 1.0)"]);
+
+        // create a tooltip
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "font-weight-bold text-dark px-2 py-2")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "lavender")
+            .style("border", "1px solid gray")
+            .style("border-radius", "12px")
+            .style("text-align", "center")
+            .style("visibility", "hidden")
+            .style("visibility", "hidden")
+            .style("visibility", "hidden")
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); });
+
+        // Show the bars
+        svg.append("g")
+            .selectAll("g")
+            // Enter in data = loop group per group
+            .data(receivedData)
+            .enter()
+            .append("g")
+            .attr("class", "labelGroup")
+            .attr("transform", function (d) { return "translate(" + x(d.group) + ",0)"; })
+            .selectAll("rect")
+            .data(function (d) { return subgroups.map(function (key) { return { key: key, value: d[key].value, percentage: d[key].percentage }; }); })
+            .enter()
+            .append("g")
+            .attr("class", "barGroup")
+            .append("rect")
+            .attr("x", function (d) { return xSubgroup(d.key); })
+            .attr("y", function (d) { return y(0); })
+            .attr("width", xSubgroup.bandwidth())
+            .attr("height", function (d) { return height - y(0); })
+            .attr("fill", function (d) { return colorFill(d.key); })
+            .style("stroke", function (d) { return colorBorder(d.key); })
+            .style("stroke-width", 1)
+            .on("mouseover", function (d) { return tooltip.style("visibility", "visible").html(d.key + ": " + d.value + "<hr class='my-1' />" + d.percentage.toFixed(2) + "%"); })
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
+            .on("mouseout", function (d) { return tooltip.style("visibility", "hidden").html(""); })
+            .transition().duration(1500)
+                .attr("y", function (d) { return y(d.value); })
+                .attr("height", function (d) { return height - y(d.value); });
+
+
+        // Append text to each bar
+        svg.selectAll(".labelGroup").data(receivedData)
+            .selectAll(".barGroup").data(function (d) { return subgroups.map(function (key) { return { key: key, value: d[key].value, percentage: d[key].percentage }; }); })
+            .append("text")
+            .attr("x", function (d) { return xSubgroup(d.key) + xSubgroup.bandwidth() / 2; })
+            .attr("y", function (d) { return y(d.value - (submissionCount / 20)); })
+            .attr("font-size", "1.2vw")
+            .attr("text-anchor", "middle")
+            .attr("font-family", "cursive")
+            .style("fill", "white")
+            .style("opacity", 0)
+            .style("pointer-events", "none")
+            .text(function (d) { return (d.value > 0 ? Math.round(d.percentage) + "%" : ""); })
+            .transition().duration(1500)
+            .delay(1500)
+            .style("opacity", 1.0);
+    }
+
+    function getArrayfromData(data) {
+
+    }
 
     function updateResults() {
         $.ajax({
@@ -382,11 +551,13 @@
                     dataJson = JSON.parse(data);
 
                     // Update js objects
+                    submissionCount = dataJson["submissionCount"];
                     answerCountJson = dataJson["answerSelectedCountMapJson"];
                     combinationsJson = dataJson["answerCombinationCountListJson"];
                     customAnswerCountJson = dataJson["customAnswerMapJson"];
                     answersPercentageJson = dataJson["answerPercentageMapJson"];
                     customAnswersPercentageJson = dataJson["customAnswerPercentageMapJson"];
+                    combinationsPercentageJson = dataJson["answerCombinationPercentageMapJson"];
                 }
                 catch (err) {
                     if (err instanceof SyntaxError) {
@@ -403,16 +574,8 @@
                 for (var questionId in questionsJson) {
                     if (questionsJson.hasOwnProperty(questionId)) {
                         if (questionsTypeJson[questionId] != 3) {
-                            // Set chart dimensions
-                            var divChart = document.getElementById("divChart" + questionId);
-                            divChart.style.height = "60vh";
-                            var margin = { top: 30, right: 30, bottom: 70, left: 60 };
-                            var width = divChart.offsetWidth - margin.left - margin.right;
-                            var height = divChart.offsetHeight - margin.top - margin.bottom;
-                            var chartDimensions = { "margin": margin, "width": width, "height": height };
-
                             // Update chart data
-                            updateBarChart("#divChart" + questionId, gatherData(questionId), chartDimensions)
+                            updateBarChart(questionId, gatherData(questionId), globalChartDimensions)
                         }
                     }
                 }    
