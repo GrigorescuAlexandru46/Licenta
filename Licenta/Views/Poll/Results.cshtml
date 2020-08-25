@@ -208,21 +208,13 @@
         for (var questionId in questionsJson) {
             if (questionsJson.hasOwnProperty(questionId)) {
                 // Create chart
-
-                if (questionId == 1) {
-                    createBarChartCompare(1, gatherDataCompare(1, 2), globalChartDimensions);
-                } else
                 if (questionsTypeJson[questionId] != 3) {
                     createBarChart(questionId, gatherData(questionId), globalChartDimensions);
                 }
             }
         }
 
-        //setTimeout(updateResults, 3000);
         setInterval(updateResults, 5000); 
-        //setTimeout(removeChart, 2000, 1);
-        //setTimeout(function () { createBarChartCompare(1, gatherDataCompare(1, 2), globalChartDimensions); }, 3000);
-        //setTimeout(function () { updateBarChartCompare(1, gatherDataCompare(1, 2), globalChartDimensions); }, 15000);
     }   
 
     function gatherData(questionId) {
@@ -274,8 +266,9 @@
 
     function removeChart(questionId) {
         var divChart = document.getElementById("divChart" + questionId);
+        var svg = divChart.getElementsByTagName("svg")[0];
 
-        divChart.innerHTML = "";
+        divChart.removeChild(svg);
     }
 
     function createBarChart(questionId, receivedData, chartDimensions) {
@@ -414,12 +407,11 @@
 
     function createBarChartCompare(questionId, receivedData, chartDimensions) {
         var divChart = document.getElementById("divChart" + questionId);
-        divChart.style.width = "65vw";
 
         // Set dimensions
         var margin = chartDimensions["margin"];
         var svgWidth = chartDimensions["width"];
-        var width = divChart.offsetWidth - globalMargin.left - globalMargin.right;
+        var width = (Math.round(svgWidth - window.innerWidth / 12)) - globalMargin.left - globalMargin.right;
         var height = chartDimensions["height"];
 
         // append the svg object to the body of the page
@@ -430,7 +422,7 @@
             .append("g")
                   .attr("class", "chartGroup")
                   .attr("width", width + margin.left + margin.right)
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         // List of subgroups
         var subgroups = receivedData.columns.slice(1);
@@ -498,7 +490,7 @@
         // Show the bars
         svg.append("g")
             .attr("class", "innerChartGroup")
-            .selectAll("g")
+            .selectAll("myg")
             // Enter in data = loop group per group
             .data(receivedData)
             .enter()
@@ -543,7 +535,7 @@
             .delay(1500)
             .style("opacity", 1.0);
 
-        var legendX = Math.round(svg.node().getBoundingClientRect().x + svg.node().getBoundingClientRect().width);
+        var legendX = Math.round(svg.node().getBBox().width + 60);
         var legendY = 0;
 
         // Legend
@@ -610,11 +602,11 @@
             );
 
         // Update the bars
-        svg.select(".innerChartGroup").selectAll("g").data(receivedData)
-            .selectAll(".barGroup").select("rect").data(function (d) { return subgroups.map(function (key) { return { key: key, value: d[key].value, percentage: d[key].percentage }; }); })
+        svg.select(".innerChartGroup").selectAll(".labelGroup").data(receivedData)
+            .selectAll("rect").data(function (d) { return subgroups.map(function (key) { return { key: key, value: d[key].value, percentage: d[key].percentage }; }); })
             .transition().duration(1500)
-            .attr("y", function (d) { return y(d.value); })
-                    .attr("height", function (d) { return height - y(d.value); });
+                .attr("y", function (d) { return y(d.value); })
+                .attr("height", function (d) { return height - y(d.value); });
 
         // Update percentage text for each bar
         svg.selectAll(".labelGroup").data(receivedData)
@@ -627,6 +619,37 @@
         console.log("Update compare");
     }
 
+    function changeChartType() {
+        var select = event.target;
+        var questionId = extractQuestionId(select.id);
+
+        if (select.value == "barChart") {
+            removeChart(questionId);
+            createBarChart(questionId, gatherData(questionId), globalChartDimensions);
+
+            document.getElementById("divCompareQuestion" + questionId).style.visibility = "visible";
+            return;
+        } 
+        document.getElementById("divCompareQuestion" + questionId).style.visibility = "hidden";
+
+        if (select.value == 2) {
+            alert(2);
+        }
+    }
+
+    function compareQuestion() {
+        var select = event.target;
+        var currentQuestionId = extractQuestionId(select.id);
+        var comparedQuestionId = select.value;
+
+        if (comparedQuestionId == -1) {
+            removeChart(currentQuestionId);
+            createBarChart(currentQuestionId, gatherData(currentQuestionId), globalChartDimensions);
+        } else {
+            removeChart(currentQuestionId);
+            createBarChartCompare(currentQuestionId, gatherDataCompare(currentQuestionId, comparedQuestionId), globalChartDimensions);
+        }
+    }
 
     function updateResults() {
         $.ajax({
@@ -691,33 +714,65 @@
 
 @foreach (var question in Model.Questions)
 {
-    <div class="jumbotron">
-        <div class="row">
-            <div class="col-12">
-                <h1 class="text-center font-weight-bold cut-text">Question @i</h1>
-            </div>
+<div class="jumbotron">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center font-weight-bold cut-text">Question @i</h1>
         </div>
-
-        <div class="row mt-5 mb-4 ml-3">
-            <div class="col-12">
-                <div class="d-block d-sm-none">
-                    <h5 class="font-weight-bold">@question.Text</h5>
-                </div>
-                <div class="d-none d-sm-block d-md-none">
-                    <h4 class="text-justify font-weight-bold">@question.Text</h4>
-                </div>
-                <div class="d-none d-md-block">
-                    <h3 class="text-justify font-weight-bold">@question.Text</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div id="divChart@(question.QuestionId)"></div>
-            </div>
-        </div>       
     </div>
+
+    <div class="row mt-5 mb-4 ml-3">
+        <div class="col-12">
+            <div class="d-block d-sm-none">
+                <h5 class="font-weight-bold">@question.Text</h5>
+            </div>
+            <div class="d-none d-sm-block d-md-none">
+                <h4 class="text-justify font-weight-bold">@question.Text</h4>
+            </div>
+            <div class="d-none d-md-block">
+                <h3 class="text-justify font-weight-bold">@question.Text</h3>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-12">
+            <div id="divChart@(question.QuestionId)"></div>
+        </div>
+    </div>
+
+    <hr class="mt-5" />
+
+    <div id="rowSelect" class="row ml-3 pb-1">
+        <div class="col-12 col-md-6">
+            <span class="font-weight-bold">Chart type</span>
+            <select class="form-control" id="selectChartType@(question.QuestionId)" onchange="changeChartType()">
+                <option value="barChart">Bar chart</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </div>
+        <div id="divCompareQuestion@(question.QuestionId)" class="col-12 col-md-6">
+            <span class="font-weight-bold">Compare results to:</span>
+            <select class="form-control" id="selectCompareQuestion@(question.QuestionId)" onchange="compareQuestion()">
+                <option value="-1">None</option>
+                @foreach (var compareQuestion in Model.Questions)
+                {
+                    if (compareQuestion.QuestionType == 1 && compareQuestion.QuestionId != question.QuestionId)
+                    {
+                        <option value="@(compareQuestion.QuestionId)">@compareQuestion.Text</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+
 
     i++;
 }
