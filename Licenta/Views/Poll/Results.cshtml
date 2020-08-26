@@ -192,8 +192,10 @@
     var globalHeight = 0;
     var globalChartDimensions = {};
 
+    var updateInterval;
+
     window.onload = function () {
-        //truncateOptions();
+        truncateOptions();
 
         // Create chart dimensions object
         var firstQuestionId = Object.keys(questionsJson)[0];
@@ -214,7 +216,7 @@
             }
         }
 
-        setInterval(updateResults, 5000); 
+        updateInterval = setInterval(updateResults, 5000); 
     }   
 
     function gatherData(questionId) {
@@ -406,8 +408,6 @@
     };
 
     function createBarChartCompare(questionId, receivedData, chartDimensions) {
-        var divChart = document.getElementById("divChart" + questionId);
-
         // Set dimensions
         var margin = chartDimensions["margin"];
         var svgWidth = chartDimensions["width"];
@@ -620,6 +620,8 @@
     }
 
     function changeChartType() {
+        resetIntervalTimer();
+
         var select = event.target;
         var questionId = extractQuestionId(select.id);
 
@@ -638,6 +640,8 @@
     }
 
     function compareQuestion() {
+        resetIntervalTimer();
+
         var select = event.target;
         var currentQuestionId = extractQuestionId(select.id);
         var comparedQuestionId = select.value;
@@ -649,6 +653,11 @@
             removeChart(currentQuestionId);
             createBarChartCompare(currentQuestionId, gatherDataCompare(currentQuestionId, comparedQuestionId), globalChartDimensions);
         }
+    }
+
+    function resetIntervalTimer() {
+        clearInterval(updateInterval);
+        updateInterval = setInterval(updateResults, 5000); 
     }
 
     function updateResults() {
@@ -688,12 +697,18 @@
                 // Update each chart
                 for (var questionId in questionsJson) {
                     if (questionsJson.hasOwnProperty(questionId)) {
-                        if (questionId == 1) {
-                            updateBarChartCompare(1, gatherDataCompare(1, 2), globalChartDimensions);
-                        } else
                         if (questionsTypeJson[questionId] != 3) {
-                            // Update chart data
-                            updateBarChart(questionId, gatherData(questionId), globalChartDimensions);
+                            var chartType = document.getElementById("selectChartType" + questionId).value;
+
+                            if (chartType == "barChart") {
+                                var comparedQuestionId = document.getElementById("selectCompareQuestion" + questionId).value;
+
+                                if (comparedQuestionId == -1) {
+                                    updateBarChart(questionId, gatherData(questionId), globalChartDimensions);
+                                } else {
+                                    updateBarChartCompare(questionId, gatherDataCompare(questionId, comparedQuestionId), globalChartDimensions);
+                                }
+                            }
                         }
                     }
                 }    
@@ -714,63 +729,65 @@
 
 @foreach (var question in Model.Questions)
 {
-<div class="jumbotron">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="text-center font-weight-bold cut-text">Question @i</h1>
-        </div>
-    </div>
-
-    <div class="row mt-5 mb-4 ml-3">
-        <div class="col-12">
-            <div class="d-block d-sm-none">
-                <h5 class="font-weight-bold">@question.Text</h5>
-            </div>
-            <div class="d-none d-sm-block d-md-none">
-                <h4 class="text-justify font-weight-bold">@question.Text</h4>
-            </div>
-            <div class="d-none d-md-block">
-                <h3 class="text-justify font-weight-bold">@question.Text</h3>
+    <div class="jumbotron">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center font-weight-bold cut-text">Question @i</h1>
             </div>
         </div>
-    </div>
 
-
-
-    <div class="row">
-        <div class="col-12">
-            <div id="divChart@(question.QuestionId)"></div>
+        <div class="row mt-5 mb-4 ml-3">
+            <div class="col-12">
+                <div class="d-block d-sm-none">
+                    <h5 class="font-weight-bold">@question.Text</h5>
+                </div>
+                <div class="d-none d-sm-block d-md-none">
+                    <h4 class="text-justify font-weight-bold">@question.Text</h4>
+                </div>
+                <div class="d-none d-md-block">
+                    <h3 class="text-justify font-weight-bold">@question.Text</h3>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <hr class="mt-5" />
-
-    <div id="rowSelect" class="row ml-3 pb-1">
-        <div class="col-12 col-md-6">
-            <span class="font-weight-bold">Chart type</span>
-            <select class="form-control" id="selectChartType@(question.QuestionId)" onchange="changeChartType()">
-                <option value="barChart">Bar chart</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
+        <div class="row">
+            <div class="col-12">
+                <div id="divChart@(question.QuestionId)"></div>
+            </div>
         </div>
-        <div id="divCompareQuestion@(question.QuestionId)" class="col-12 col-md-6">
-            <span class="font-weight-bold">Compare results to:</span>
-            <select class="form-control" id="selectCompareQuestion@(question.QuestionId)" onchange="compareQuestion()">
-                <option value="-1">None</option>
-                @foreach (var compareQuestion in Model.Questions)
-                {
-                    if (compareQuestion.QuestionType == 1 && compareQuestion.QuestionId != question.QuestionId)
+
+       @if (question.QuestionType != 3)
+       { 
+
+        <hr class="mt-5" />
+
+        <div id="rowSelect" class="row ml-3 pb-1">
+            <div class="col-12 col-md-6">
+                <span class="font-weight-bold">Chart type</span>
+                <select class="form-control" id="selectChartType@(question.QuestionId)" onchange="changeChartType()">
+                    <option value="barChart">Bar chart</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div id="divCompareQuestion@(question.QuestionId)" class="col-12 col-md-6">
+                <span class="font-weight-bold">Compare results to:</span>
+                <select class="form-control" id="selectCompareQuestion@(question.QuestionId)" onchange="compareQuestion()">
+                    <option value="-1">None</option>
+                    @foreach (var compareQuestion in Model.Questions)
                     {
-                        <option value="@(compareQuestion.QuestionId)">@compareQuestion.Text</option>
+                        if (compareQuestion.QuestionType != 3 && compareQuestion.QuestionId != question.QuestionId)
+                        {
+                            <option value="@(compareQuestion.QuestionId)">@compareQuestion.Text</option>
+                        }
                     }
-                }
-            </select>
+                </select>
+            </div>
         </div>
+       }
     </div>
-</div>
 
 
 
