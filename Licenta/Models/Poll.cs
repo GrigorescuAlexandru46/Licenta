@@ -14,6 +14,8 @@ namespace Licenta.Models
 
         public string Name { get; set; }
 
+        public string Description { get; set; }
+
         [ForeignKey("Profile")]
         public int OwnerId { get; set; }
 

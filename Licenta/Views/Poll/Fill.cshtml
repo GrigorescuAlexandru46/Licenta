@@ -38,6 +38,18 @@
     {
         @Html.Hidden("IpAddress", null);
         @Html.Hidden("QuestionCount", Model.Questions.Count)
+
+        <div class="card bg-light mb-5">
+            <div class="card-header bg-info"></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 text-justify font-weight-bold" style="font-size: 1.1rem;">
+                        @Model.Description
+                    </div>
+                </div>
+            </div>
+        </div>
+
         foreach (var question in Model.Questions)
         {
             <div class="card bg-light mb-5">

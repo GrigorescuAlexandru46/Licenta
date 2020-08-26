@@ -706,9 +706,13 @@
     <div class="card bg-light">
         <div class="card-header"><h4 class="mb-0 font-weight-bold">Poll details</h4></div>
         <div class="card-body">
-            <div class="row">
+            <div class="row mb-4">
                 @Html.Label("Name", "Poll name", new { @class = "col-8 col-md-2 offset-2 offset-md-1 control-label font-weight-bold" })
                 @Html.TextBox("Name", Model.Name, new { @class = "col-8 col-md-7 offset-2 offset-md-1 offset-lg-0 form-control" })
+            </div>
+            <div class="row">
+                @Html.Label("Description", "Poll description", new { @class = "col-8 col-md-3 col-lg-2  offset-2 offset-md-1 control-label font-weight-bold" })
+                @Html.TextArea("Description", Model.Description, new { @class = "col-8 col-md-7 offset-2 offset-md-0 offset-lg-0 form-control" })
             </div>
         </div>
     </div>

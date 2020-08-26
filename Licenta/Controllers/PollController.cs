@@ -85,6 +85,7 @@ namespace Licenta.Controllers
                 int questionCount = ConvertStringToInt(form["Questions_Count"]);
 
                 poll.Name = form["Name"];
+                poll.Description = form["Description"];
                 poll.CreationDate = ConvertStringToDateTime(form["CreationDate"]);
                 poll.OwnerId = GetOwnProfile().ProfileId;
 
@@ -162,6 +163,7 @@ namespace Licenta.Controllers
                 int questionCount = ConvertStringToInt(form["Questions_Count"]);
 
                 newPoll.Name = form["Name"];
+                newPoll.Description = form["Description"];
                 newPoll.CreationDate = ConvertStringToDateTime(form["CreationDate"]);
                 newPoll.OwnerId = GetOwnProfile().ProfileId;
 
