@@ -58,17 +58,6 @@ namespace Licenta.Controllers
             return View(poll);
         }
 
-        [NonAction]
-        public bool PollIsActive(Poll poll)
-        {
-            var activePollList = (from activePoll in db.ActivePolls
-                                   where activePoll.PollId == poll.PollId
-                                   select activePoll
-                                    ).ToList();
-
-            return activePollList.Count > 0 ? true : false;
-        } 
-
         public ActionResult New()
         {
             Poll poll = new Poll();
@@ -333,6 +322,7 @@ namespace Licenta.Controllers
             ViewBag.UserIsAdmin = UserIsAdmin();
             ViewBag.UserIsProfileOwner = UserIsProfileOwner(poll.Profile);
             ViewBag.PollIsActive = PollIsActive(poll);
+            ViewBag.PollIpAdresses = GetPollIpAdresses(poll);
 
             if (TempData.ContainsKey("Message"))
             {
@@ -371,6 +361,10 @@ namespace Licenta.Controllers
                                 submission.Text = answerText;
                                 submission.QuestionType = questionType;
                                 submission.PollId = poll.PollId;
+                                submission.Latitude = double.Parse(form["GeoBytesLatitude"]);
+                                submission.Longitude = double.Parse(form["GeoBytesLongitude"]);
+                                submission.Country = form["GeoBytesCountry"];
+                                submission.City = form["GeoBytesCity"];
 
                                 db.Submissions.Add(submission);
                                 break;
@@ -393,6 +387,10 @@ namespace Licenta.Controllers
                                 submission.Text = form["Question" + i + "_Answer" + j + "_Text"];
                                 submission.QuestionType = questionType;
                                 submission.PollId = poll.PollId;
+                                submission.Latitude = double.Parse(form["GeoBytesLatitude"]);
+                                submission.Longitude = double.Parse(form["GeoBytesLongitude"]);
+                                submission.Country = form["GeoBytesCountry"];
+                                submission.City = form["GeoBytesCity"];
 
                                 db.Submissions.Add(submission);
                             }
@@ -408,6 +406,10 @@ namespace Licenta.Controllers
                         submission.Text = form["Question" + i + "_CustomAnswer"];
                         submission.QuestionType = questionType;
                         submission.PollId = poll.PollId;
+                        submission.Latitude = double.Parse(form["GeoBytesLatitude"]);
+                        submission.Longitude = double.Parse(form["GeoBytesLongitude"]);
+                        submission.Country = form["GeoBytesCountry"];
+                        submission.City = form["GeoBytesCity"];
 
                         db.Submissions.Add(submission);
                     }
@@ -415,7 +417,8 @@ namespace Licenta.Controllers
 
                 SubmissionIpAddress submissionIpAddress = new SubmissionIpAddress();
                 submissionIpAddress.PollId = poll.PollId;
-                submissionIpAddress.IpAddress = form["IpAddress"];
+                submissionIpAddress.IpAddress = form["GeoBytesIpAddress"];
+                db.SubmissionIpAddresses.Add(submissionIpAddress);
 
                 db.SaveChanges();
 
@@ -865,6 +868,39 @@ namespace Licenta.Controllers
                 TempData["Message"] = "An error occured while trying to update the results.";
                 return RedirectToAction("Index", "Home");
             }
+        }
+
+        [NonAction]
+        public bool IpExistsInPoll(string ipAddress, Poll poll)
+        {
+            var submissionsWithGivenIp = (from sub in db.SubmissionIpAddresses
+                                          where sub.PollId == poll.PollId && sub.IpAddress == ipAddress
+                                          select sub
+                                         ).ToList();
+
+            return submissionsWithGivenIp.Count > 0 ? true : false;
+        }
+
+        [NonAction]
+        public List<string> GetPollIpAdresses(Poll poll)
+        {
+            var pollIpAdresses = (from sub in db.SubmissionIpAddresses
+                                          where sub.PollId == poll.PollId
+                                          select sub.IpAddress
+                                         ).ToList();
+
+            return pollIpAdresses;
+        }
+
+        [NonAction]
+        public bool PollIsActive(Poll poll)
+        {
+            var activePollList = (from activePoll in db.ActivePolls
+                                  where activePoll.PollId == poll.PollId
+                                  select activePoll
+                                  ).ToList();
+
+            return activePollList.Count > 0 ? true : false;
         }
 
         [NonAction]

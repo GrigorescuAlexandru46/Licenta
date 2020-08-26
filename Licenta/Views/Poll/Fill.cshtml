@@ -17,6 +17,13 @@
 @if (ViewBag.PollIsActive)
 {
     <script>
+        var usedIpAdresses = [
+            @foreach (string element in ViewBag.PollIpAdresses)
+            {
+                <text>"@(element)",</text>
+            }
+        ];
+
         window.onload = function () {
             var navBar = document.getElementById("navBarTopMenu");
             navBar.parentNode.removeChild(navBar);
@@ -29,29 +36,52 @@
 
             $.getJSON('http://gd.geobytes.com/GetCityDetails?callback=?', function (data) {
                 var ipAddress = data["geobytesipaddress"]
-                document.getElementById("IpAddress").value = ipAddress;
+                var latitude = data["geobyteslatitude"];
+                var longitude = data["geobyteslongitude"];
+                var country = data["geobytescountry"];
+                var city = data["geobytescity"];
+
+                if (!usedIpAdresses.includes(ipAddress)) {
+                    var fillDiv = document.getElementById("fillDiv");
+                    var ipIsUsedDiv = document.getElementById("ipIsUsed");
+
+                    fillDiv.style.display = "none";
+                    ipIsUsedDiv.style.display = "block";
+                }
+
+                document.getElementById("GeoBytesIpAddress").value = ipAddress;
+                document.getElementById("GeoBytesLatitude").value = latitude;
+                document.getElementById("GeoBytesLongitude").value = longitude;
+                document.getElementById("GeoBytesCountry").value = country;
+                document.getElementById("GeoBytesCity").value = city;
             });
         }
     </script>
 
-    using (Html.BeginForm("Fill", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
-    {
-        @Html.Hidden("IpAddress", null);
-        @Html.Hidden("QuestionCount", Model.Questions.Count)
+    <div id="fillDiv">
+        @using (Html.BeginForm("Fill", "Poll", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+        {
+            @Html.Hidden("GeoBytesIpAddress", null);
+            @Html.Hidden("GeoBytesLatitude", null);
+            @Html.Hidden("GeoBytesLongitude", null);
+            @Html.Hidden("GeoBytesCountry", null);
+            @Html.Hidden("GeoBytesCity", null);
 
-        <div class="card bg-light mb-5">
-            <div class="card-header bg-info"></div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-12 text-justify font-weight-bold" style="font-size: 1.1rem;">
-                        @Model.Description
+            @Html.Hidden("QuestionCount", Model.Questions.Count)
+
+            <div class="card bg-light mb-5">
+                <div class="card-header bg-info"></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 text-justify font-weight-bold" style="font-size: 1.1rem;">
+                            @Model.Description
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        foreach (var question in Model.Questions)
-        {
+            foreach (var question in Model.Questions)
+            {
             <div class="card bg-light mb-5">
                 <div class="card-header bg-primary"></div>
                 <div class="card-body">
@@ -142,19 +172,20 @@
                 </div>
             </div>
             i++;
-        }
+            }
 
-        <div class="row mb-5 text-center">
-            <div class="col-12 d-flex justify-content-center">
-                <input type="submit" class="btn btn-info btn-block btn-lg mr-0" value="Submit" />
+            <div class="row mb-5 text-center">
+                <div class="col-12 d-flex justify-content-center">
+                    <input type="submit" class="btn btn-info btn-block btn-lg mr-0" value="Submit" />
+                </div>
             </div>
-        </div>
 
-        @Html.Hidden("PollId", Model.PollId)
-        @Html.Hidden("Name", Model.Name)
-        @Html.Hidden("OwnerId", Model.OwnerId)
-        @Html.Hidden("CreationDate", Model.CreationDate)
-    }
+            @Html.Hidden("PollId", Model.PollId)
+            @Html.Hidden("Name", Model.Name)
+            @Html.Hidden("OwnerId", Model.OwnerId)
+            @Html.Hidden("CreationDate", Model.CreationDate)
+         }
+    </div>
 }
 else
 {
@@ -176,5 +207,10 @@ else
         <p>The poll you have tried to access has been set inactive by the creator and it can no longer receive submissions.</p>
     </div>
 }
+
+<div id="ipIsUsed" class="jumbotron" style="display: none">
+    <h1 class="font-weight-bold mb-5">Poll already filled</h1>
+    <p>You have already filled this poll.</p>
+</div>
 
 

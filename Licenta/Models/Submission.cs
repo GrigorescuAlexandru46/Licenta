@@ -25,6 +25,14 @@ namespace Licenta.Models
 
         public DateTime SubmitDate { get; set; }
 
+        public double Latitude { get; set; }
+
+        public double Longitude { get; set; }
+
+        public string Country { get; set; }
+
+        public string City { get; set; }
+
         [ForeignKey("AnswerId")]
         public virtual Answer Answer { get; set; }
     }
