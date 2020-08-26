@@ -528,6 +528,36 @@ namespace Licenta.Controllers
                     }
                 }
 
+                foreach (Question question1 in poll.Questions)
+                {
+                    if (question1.QuestionType != 3)
+                    {
+                        foreach (Answer answer1 in question1.Answers)
+                        {
+                            foreach (Question question2 in poll.Questions)
+                            {
+                                if (question2.QuestionType != 3)
+                                {
+                                    foreach (Answer answer2 in question2.Answers)
+                                    {
+                                        if (question1.QuestionId != question2.QuestionId && answer1.AnswerId != answer2.AnswerId)
+                                        {
+                                            Tuple<int, int> combination = new Tuple<int, int>(answer1.AnswerId, answer2.AnswerId);
+
+                                            if (!answerCombinationCountMap.ContainsKey(combination))
+                                            {
+                                                answerCombinationCountMap.Add(combination, 0);
+                                            }
+                                        }
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+
 
                 int submissionCount = (from sub in db.Submissions
                                       where sub.PollId == poll.PollId
@@ -700,6 +730,36 @@ namespace Licenta.Controllers
                         }
                     }
                 }
+            }
+
+            foreach (Question question1 in poll.Questions)
+            {
+                if (question1.QuestionType != 3)
+                {
+                    foreach (Answer answer1 in question1.Answers)
+                    {
+                        foreach (Question question2 in poll.Questions)
+                        {
+                            if (question2.QuestionType != 3)
+                            {
+                                foreach (Answer answer2 in question2.Answers)
+                                {
+                                    if (question1.QuestionId != question2.QuestionId && answer1.AnswerId != answer2.AnswerId)
+                                    {
+                                        Tuple<int, int> combination = new Tuple<int, int>(answer1.AnswerId, answer2.AnswerId);
+
+                                        if (!answerCombinationCountList.ContainsKey(combination))
+                                        {
+                                            answerCombinationCountList.Add(combination, 0);
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+
             }
 
             int submissionCount = (from sub in db.Submissions

@@ -619,6 +619,10 @@
         console.log("Update compare");
     }
 
+    function createMapChart(questionId, receivedData, chartDimensions) {
+        alert("create map chart");
+    }
+
     function changeChartType() {
         resetIntervalTimer();
 
@@ -630,12 +634,16 @@
             createBarChart(questionId, gatherData(questionId), globalChartDimensions);
 
             document.getElementById("divCompareQuestion" + questionId).style.visibility = "visible";
+            document.getElementById("selectCompareQuestion" + questionId).value = -1;
             return;
         } 
-        document.getElementById("divCompareQuestion" + questionId).style.visibility = "hidden";
 
-        if (select.value == 2) {
-            alert(2);
+        document.getElementById("divCompareQuestion" + questionId).style.visibility = "hidden";  
+
+        if (select.value == "mapChart") {
+            removeChart(questionId);
+            createBarChart(questionId, gatherData(questionId), globalChartDimensions);
+            //createMapChart(questionId, null, globalChartDimensions);
         }
     }
 
@@ -766,7 +774,7 @@
                 <span class="font-weight-bold">Chart type</span>
                 <select class="form-control" id="selectChartType@(question.QuestionId)" onchange="changeChartType()">
                     <option value="barChart">Bar chart</option>
-                    <option value="2">2</option>
+                    <option value="mapChart">Map chart</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
                     <option value="5">5</option>
