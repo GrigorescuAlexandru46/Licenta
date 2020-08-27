@@ -606,6 +606,89 @@ namespace Licenta.Controllers
                     answerCombinationPercentageMap.Add(combination, percentage);
                 }
 
+                Dictionary<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> answerObjectsMapChart = new Dictionary<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>>();
+                foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
+                {
+                    Submission submission = entry.Value.ElementAt(0);
+                    double latitude = Math.Round(submission.Latitude, 3);
+                    double longitude = Math.Round(submission.Longitude, 3);
+
+                    Tuple<double, double> centerCoords = null;
+                    bool foundCenter = false;
+                    foreach (KeyValuePair<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> coordsEntry in answerObjectsMapChart)
+                    {
+                        if (Math.Abs(coordsEntry.Key.Item1 - latitude) <= 4 && Math.Abs(coordsEntry.Key.Item2 - longitude) <= 4)
+                        {
+                            centerCoords = new Tuple<double, double>(coordsEntry.Key.Item1, coordsEntry.Key.Item2);
+                            foundCenter = true;
+                            break;
+                        }
+                    }
+
+                    // if we didnt find anything valid in the foreach above, create new center
+                    if (foundCenter == false)
+                    {
+                        centerCoords = new Tuple<double, double>(latitude, longitude);
+                        answerObjectsMapChart.Add(centerCoords, new Dictionary<int, Dictionary<string, Dictionary<string, object>>>());
+                    }
+
+                    Dictionary<int, Dictionary<string, Dictionary<string, object>>> innerDictionary = answerObjectsMapChart[centerCoords];
+                    foreach (Submission sub in entry.Value)
+                    {
+                        if (sub.QuestionType != 3)
+                        {
+                            if (innerDictionary.ContainsKey(sub.Answer.QuestionId))
+                            {
+                                Dictionary<string, Dictionary<string, object>> extraInnerDictionary = innerDictionary[sub.Answer.QuestionId];
+
+                                if (extraInnerDictionary.ContainsKey(sub.Text))
+                                {
+                                    extraInnerDictionary[sub.Text]["value"] = (int)extraInnerDictionary[sub.Text]["value"] + 1;
+                                    extraInnerDictionary[sub.Text]["country"] = sub.Country;
+                                    extraInnerDictionary[sub.Text]["city"] = sub.City;
+                                }
+                                else
+                                {
+                                    extraInnerDictionary.Add(sub.Text, new Dictionary<string, object>());
+                                    extraInnerDictionary[sub.Text]["value"] = 1;
+                                    extraInnerDictionary[sub.Text]["country"] = sub.Country;
+                                    extraInnerDictionary[sub.Text]["city"] = sub.City;
+                                }
+                            }
+                            else
+                            {
+                                Dictionary<string, Dictionary<string, object>> extraInnerDictionary = new Dictionary<string, Dictionary<string, object>>();
+                                extraInnerDictionary.Add(sub.Text, new Dictionary<string, object>());
+                                extraInnerDictionary[sub.Text]["value"] = 1;
+                                extraInnerDictionary[sub.Text]["country"] = sub.Country;
+                                extraInnerDictionary[sub.Text]["city"] = sub.City;
+
+                                innerDictionary.Add(sub.Answer.QuestionId, extraInnerDictionary);
+                            }
+                        }
+                    }
+                }
+
+                foreach (KeyValuePair<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> entry in answerObjectsMapChart)
+                {
+                    foreach (Question question in poll.Questions)
+                    {
+                        if (question.QuestionType != 3)
+                        {
+                            foreach (Answer answer in question.Answers)
+                            {
+                                if (!entry.Value[question.QuestionId].ContainsKey(answer.Text))
+                                {
+                                    entry.Value[question.QuestionId].Add(answer.Text, new Dictionary<string, object>());
+                                    entry.Value[question.QuestionId][answer.Text]["value"] = 0;
+                                    entry.Value[question.QuestionId][answer.Text]["country"] = "None";
+                                    entry.Value[question.QuestionId][answer.Text]["city"] = "None";
+                                }
+                            }
+                        }
+                    }
+                }
+
                 ViewBag.SubmissionCount = submissionCount;
                 ViewBag.AnswerSelectedCountMap = answerSelectedCountMap;
                 ViewBag.SubmissionList = submissionList;
@@ -614,6 +697,7 @@ namespace Licenta.Controllers
                 ViewBag.AnswerPercentageMap = answerPercentageMap;
                 ViewBag.CustomAnswerPercentageMap = customAnswerPercentageMap;
                 ViewBag.AnswerCombinationPercentageMap = answerCombinationPercentageMap;
+                ViewBag.AnswerObjectsMapChart = answerObjectsMapChart;
 
 
                 return View(poll);
