@@ -3,6 +3,7 @@ using Microsoft.AspNet.Identity;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -433,6 +434,40 @@ namespace Licenta.Controllers
             }
         }
 
+        
+        [NonAction]
+        public Dictionary<string, int> createInnerCustomAnswerMap(Question question)
+        {
+            Dictionary<string, int> innerCustomAnswerMap = new Dictionary<string, int>();
+
+            List<Submission> selectedCustomAnswers = (from sub in db.Submissions
+                                         where sub.QuestionType == 3 && sub.Answer.Question.QuestionId == question.QuestionId
+                                         select sub
+                                        ).ToList();
+
+            foreach (Submission sub in selectedCustomAnswers)
+            {
+                bool foundSimilarString = false;
+
+                foreach (KeyValuePair<string, int> entry in innerCustomAnswerMap)
+                {
+                    if (StringsAreSimilar(sub.Text, entry.Key))
+                    {
+                        innerCustomAnswerMap[entry.Key]++;
+                        foundSimilarString = true;
+                        break;
+                    }
+                }
+
+                if (foundSimilarString == false)
+                {
+                    innerCustomAnswerMap.Add(FormatString(sub.Text), 1);
+                }
+            }
+
+            return innerCustomAnswerMap;
+        }
+
         public ActionResult Results(int id)
         {
             Poll poll = db.Polls.Find(id);
@@ -463,30 +498,7 @@ namespace Licenta.Controllers
                 {
                     if (question.QuestionType == 3)
                     {
-                        Dictionary<string, int> answerDetailsMap = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
-
-                        foreach (var submission in submissionList)
-                        {
-                            if (submission.Answer.Question.QuestionId == question.QuestionId)
-                            {
-                                string answerText = submission.Text;
-
-                                if (answerDetailsMap.ContainsKey(answerText))
-                                {
-                                    answerDetailsMap[answerText]++;
-                                }
-                                else
-                                {
-                                    answerDetailsMap.Add(answerText, 1);
-                                }
-                            }
-                        }
-
-                        //var sortedCustomAnswerMap = from entry in customAnswerMap orderby entry.Value descending select entry;
-                        var sortedAnswerDetailsMap = answerDetailsMap.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-
-                        //customAnswerMap.Add(question.QuestionId, answerDetailsMap);
-                        customAnswerMap.Add(question.QuestionId, sortedAnswerDetailsMap);
+                        customAnswerMap.Add(question.QuestionId, createInnerCustomAnswerMap(question));
                     }
                 }
 
@@ -566,7 +578,6 @@ namespace Licenta.Controllers
                                      ).Count();
 
                 Dictionary<int, double> answerPercentageMap = new Dictionary<int, double>();
-                Dictionary<int, Dictionary<string, double>> customAnswerPercentageMap = new Dictionary<int, Dictionary<string, double>>();
                 foreach (Question question in poll.Questions)
                 {
                     foreach (Answer answer in question.Answers)
@@ -576,25 +587,19 @@ namespace Licenta.Controllers
                             double percentage = (double)answerSelectedCountMap[answer.AnswerId] / submissionCount * 100;
                             answerPercentageMap.Add(answer.AnswerId, percentage);
                         }
-                        else
-                        {
-                            Dictionary<string, double> customAnswerTextPercentageMap = new Dictionary<string, double>(StringComparer.InvariantCultureIgnoreCase);
-                            List<string> customAnswerTextList = (from sub in db.Submissions
-                                                                 where sub.AnswerId == answer.AnswerId
-                                                                 select sub.Text
-                                                                ).ToList();
-
-                            foreach (string text in customAnswerTextList)
-                            {
-                                if (!customAnswerTextPercentageMap.ContainsKey(text))
-                                {
-                                    customAnswerTextPercentageMap.Add(text, (double)customAnswerMap[question.QuestionId][text] / submissionCount * 100);
-                                }    
-                            }
-
-                            customAnswerPercentageMap.Add(question.QuestionId, customAnswerTextPercentageMap);
-                        }
                     }
+                }
+
+                Dictionary<int, Dictionary<string, double>> customAnswerPercentageMap = new Dictionary<int, Dictionary<string, double>>();
+                foreach (KeyValuePair<int, Dictionary<string, int>> entry in customAnswerMap)
+                {
+                    Dictionary<string, double> innerDictionary = new Dictionary<string, double>();
+                    foreach(KeyValuePair<string, int> innerEntry in entry.Value)
+                    {
+                        innerDictionary.Add(innerEntry.Key, (double)innerEntry.Value / submissionCount * 100);
+                    }
+
+                    customAnswerPercentageMap.Add(entry.Key, innerDictionary);
                 }
 
                 Dictionary<Tuple<int, int>, double> answerCombinationPercentageMap = new Dictionary<Tuple<int, int>, double>();
@@ -750,30 +755,7 @@ namespace Licenta.Controllers
             {
                 if (question.QuestionType == 3)
                 {
-                    Dictionary<string, int> answerDetailsMap = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
-
-                    foreach (var submission in submissionList)
-                    {
-                        if (submission.Answer.Question.QuestionId == question.QuestionId)
-                        {
-                            string answerText = submission.Text;
-
-                            if (answerDetailsMap.ContainsKey(answerText))
-                            {
-                                answerDetailsMap[answerText]++;
-                            }
-                            else
-                            {
-                                answerDetailsMap.Add(answerText, 1);
-                            }
-                        }
-                    }
-
-                    //var sortedCustomAnswerMap = from entry in customAnswerMap orderby entry.Value descending select entry;
-                    //var sortedAnswerDetailsMap = answerDetailsMap.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-
-                    customAnswerMap.Add(question.QuestionId, answerDetailsMap);
-                    //customAnswerMap.Add(question.QuestionId, sortedAnswerDetailsMap);
+                    customAnswerMap.Add(question.QuestionId, createInnerCustomAnswerMap(question));
                 }
             }
 
@@ -853,7 +835,6 @@ namespace Licenta.Controllers
                                      ).Count();
 
             Dictionary<int, double> answerPercentageMap = new Dictionary<int, double>();
-            Dictionary<int, Dictionary<string, double>> customAnswerPercentageMap = new Dictionary<int, Dictionary<string, double>>();
             foreach (Question question in poll.Questions)
             {
                 foreach (Answer answer in question.Answers)
@@ -863,25 +844,19 @@ namespace Licenta.Controllers
                         double percentage = (double)answerSelectedCountMap[answer.AnswerId] / submissionCount * 100;
                         answerPercentageMap.Add(answer.AnswerId, percentage);
                     }
-                    else
-                    {
-                        Dictionary<string, double> customAnswerTextPercentageMap = new Dictionary<string, double>();
-                        List<string> customAnswerTextList = (from sub in db.Submissions
-                                                             where sub.AnswerId == answer.AnswerId
-                                                             select sub.Text
-                                                            ).ToList();
-
-                        foreach (string text in customAnswerTextList)
-                        {
-                            if (!customAnswerTextPercentageMap.ContainsKey(text))
-                            {
-                                customAnswerTextPercentageMap.Add(text, (double)customAnswerMap[question.QuestionId][text] / submissionCount * 100);
-                            }
-                        }
-
-                        customAnswerPercentageMap.Add(question.QuestionId, customAnswerTextPercentageMap);
-                    }
                 }
+            }
+
+            Dictionary<int, Dictionary<string, double>> customAnswerPercentageMap = new Dictionary<int, Dictionary<string, double>>();
+            foreach (KeyValuePair<int, Dictionary<string, int>> entry in customAnswerMap)
+            {
+                Dictionary<string, double> innerDictionary = new Dictionary<string, double>();
+                foreach (KeyValuePair<string, int> innerEntry in entry.Value)
+                {
+                    innerDictionary.Add(innerEntry.Key, (double)innerEntry.Value / submissionCount * 100);
+                }
+
+                customAnswerPercentageMap.Add(entry.Key, innerDictionary);
             }
 
             Dictionary<Tuple<int, int>, double> answerCombinationPercentageMap = new Dictionary<Tuple<int, int>, double>();
@@ -1085,6 +1060,111 @@ namespace Licenta.Controllers
             }
 
             return false;
+        }
+
+        [NonAction]
+        public string FormatString(string s)
+        {
+            TextInfo textInfo = new CultureInfo("en-US", false).TextInfo;
+
+            s = s.Trim();
+            s = textInfo.ToTitleCase(s.ToLower());
+
+            return s;
+        }
+
+        [NonAction]
+        public bool StringsAreSimilar(string s1, string s2)
+        {
+            //s1 = "Michael JacksonSmith";
+            //s2 = "JacksonMichaelSmith";;
+
+            if (string.Equals(s1, s2)) {
+                return true;
+            }
+            if (string.Equals(s1.ToLower(), s2.ToLower()))
+            {
+                return true;
+            }
+
+            char[] separators = { ' ', ',', '.', ';', ':', '(', ')', '[', ']', '{', '}', '\n', '/', '\\', '\t', '|', '!', '?', '`', '~', '@', '#', '$', '%', '^', '&', '*', '\"' };
+            string[] separatorsString = { " ", ",", ".", ";", ":", "(", ")", "[", "]", "{", "}", "\n", "/", "\\", "\t", "|", "!", "?", "`", "~", "@", "#", "$", "%", "^", "&", "*", "\"" };
+
+            string stringWithNoSeparators1 = s1.ToLower();
+            string stringWithNoSeparators2 = s2.ToLower();
+            foreach (string c in separatorsString)
+            {
+                stringWithNoSeparators1 = stringWithNoSeparators1.Replace(c, string.Empty);
+                stringWithNoSeparators2 = stringWithNoSeparators2.Replace(c, string.Empty);
+            }
+
+            if (string.Equals(stringWithNoSeparators1, stringWithNoSeparators2)) {
+                return true;
+            }
+
+            string[] tokens1 = s1.ToLower().Split(separators);
+            string[] tokens2 = s2.ToLower().Split(separators);
+            bool fail1 = false;
+            bool fail2 = false;
+
+            foreach (string token1 in tokens1)
+            {
+                if (!stringWithNoSeparators2.Contains(token1))
+                {
+                    fail1 = true;
+                }
+            }
+
+            foreach (string token2 in tokens2)
+            {
+                if (!stringWithNoSeparators1.Contains(token2))
+                {
+                    fail2 = true;
+                }
+            }
+
+            if (fail1 && fail2)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public static int ComputeLevenshteinDistance(string s, string t)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                if (string.IsNullOrEmpty(t))
+                    return 0;
+                return t.Length;
+            }
+
+            if (string.IsNullOrEmpty(t))
+            {
+                return s.Length;
+            }
+
+            int n = s.Length;
+            int m = t.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            // initialize the top and right of the table to 0, 1, 2, ...
+            for (int i = 0; i <= n; d[i, 0] = i++) ;
+            for (int j = 1; j <= m; d[0, j] = j++) ;
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+                    int min1 = d[i - 1, j] + 1;
+                    int min2 = d[i, j - 1] + 1;
+                    int min3 = d[i - 1, j - 1] + cost;
+                    d[i, j] = Math.Min(Math.Min(min1, min2), min3);
+                }
+            }
+            return d[n, m];
         }
 
         [NonAction]

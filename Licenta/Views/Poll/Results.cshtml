@@ -5,6 +5,8 @@
 <script src="/Content/d3/d3.js"></script>
 <script src="/Content/d3/d3-geo-projection.v2.min.js"></script>
 <script src="/Content/d3/d3-scale-chromatic.v1.min.js"></script>
+<script src="/Content/d3/d3.layout.cloud.js"></script>
+
 
 <script>
     var submissionCount = @ViewBag.SubmissionCount;
@@ -186,6 +188,21 @@
         return numberQuestionId;
     }
 
+    function generateRandomColorHsl() {
+        var hue;
+        var saturation;
+        var lightness;
+
+        do {
+            hue = Math.floor(Math.random() * 360);
+        } while (40 < hue && hue < 100)
+
+        saturation = Math.floor(Math.random() * 80) + 20;
+        lightness = Math.floor(Math.random() * 40) + 20;
+
+        return "hsl(" + hue + ", " + saturation + "%, " + lightness + "%)";
+    }
+
     function truncateOptions() {
         var optionList = document.getElementsByTagName("option");
 
@@ -197,11 +214,57 @@
         }
     }
 
+    function isEquivalent(a, b) {
+        // Create arrays of property names
+        var aProps = Object.getOwnPropertyNames(a);
+        var bProps = Object.getOwnPropertyNames(b);
+
+        // If number of properties is different,
+        // objects are not equivalent
+        if (aProps.length != bProps.length) {
+            return false;
+        }
+
+        for (var i = 0; i < aProps.length; i++) {
+            var propName = aProps[i];
+
+            // If values of same property are not equal,
+            // objects are not equivalent
+            if (a[propName] !== b[propName]) {
+                return false;
+            }
+        }
+
+        // If we made it this far, objects
+        // are considered equivalent
+        return true;
+    }
+
     function arrayEquals(a, b) {
-        return Array.isArray(a) &&
-            Array.isArray(b) &&
-            a.length === b.length &&
-            a.every((val, index) => val === b[index]);
+
+        if (!Array.isArray(a) || !Array.isArray(b) || a.length != b.length) {
+            return false;
+        }
+
+        for (let i = 0; i < a.length; i++) {    
+            var tempA = {
+                answerCount: a[i].answerCount,
+                answerPercentage: a[i].answerPercentage,
+                text: a[i].text,
+            };
+
+            var tempB = {
+                answerCount: b[i].answerCount,
+                answerPercentage: b[i].answerPercentage,
+                text: b[i].text,
+            };
+
+            if (!isEquivalent(tempA, tempB)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     function countProperties(obj) {
@@ -242,6 +305,14 @@
                 // Create chart
                 if (questionsTypeJson[questionId] != 3) {
                     createBarChart(questionId, gatherData(questionId), globalChartDimensions);
+                }
+                else {
+                    if (containsOnlyNumbers(questionId)) {
+                        createNumbersChart(questionId, gatherDataNumbersChart(questionId), globalChartDimensions);
+                    }
+                    else {
+                        createWordCloud(questionId, gatherDataWordCloud(questionId), globalChartDimensions);
+                    }
                 }
             }
         }
@@ -321,6 +392,27 @@
         });
 
         return data;
+    }
+
+    function gatherDataWordCloud(questionId) {
+        var data = [];
+
+        Object.keys(customAnswerCountJson[questionId]).forEach(function (answerText) {
+            var answerCount = customAnswerCountJson[questionId][answerText];
+            var answerPercentage = customAnswersPercentageJson[questionId][answerText];
+
+            data.push({
+                text: answerText,
+                size: answerCount,
+                percentage: answerPercentage
+            });
+        });
+
+        return data;
+    }
+
+    function gatherDataNumbersChart(questionId) {
+
     }
 
     function calculateTicks(max) {
@@ -403,12 +495,13 @@
                         .attr("y", function (d) { return yAxis(0); })
                         .attr("width", xAxis.bandwidth())
                         .attr("height", function (d) { return height - yAxis(0); })
-                        .attr("fill", colorObject.color)
+                        .attr("fill", colorObject.border)
+                        .attr("fill-opacity", .5)
                         .style("stroke", colorObject.border)
                         .style("stroke-width", 1)
-                        .on("mouseover", function (d) { return tooltip.style("visibility", "visible").html(d.answerText + ": " + d.answerCount + "<hr class='my-1' />" + answersPercentageJson[d.answerId].toFixed(2) + "%"); })
+                        .on("mouseover", function (d) { d3.select(this).style("fill-opacity", .7).style("stroke-width", 3); return tooltip.style("visibility", "visible").html(d.answerText + ": " + d.answerCount + "<hr class='my-1' />" + answersPercentageJson[d.answerId].toFixed(2) + "%"); })
                         .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
-                        .on("mouseout", function (d) { return tooltip.style("visibility", "hidden").html(""); })
+                        .on("mouseout", function (d) { d3.select(this).style("fill-opacity", .5).style("stroke-width", 1); return tooltip.style("visibility", "hidden").html(""); })
                         .transition().duration(1500)
                             .attr("y", function (d) { return yAxis(d.answerCount); })
                             .attr("height", function (d) { return height - yAxis(d.answerCount); })
@@ -418,13 +511,13 @@
         svg.selectAll(".barGroup").data(receivedData)
             .append("text")
                 .attr("x", function (d) { return xAxis(d.answerText) + xAxis.bandwidth() / 2; })
-                .attr("y", function (d) { return yAxis(d.answerCount - (submissionCount / 7)); })
+                .attr("y", function (d) { return yAxis(d.answerCount - (submissionCount / 10)); })
                 .attr("font-size", "2vw")
                 .attr("text-anchor", "middle")
                 .attr("font-family", "cursive")
                 .style("fill", "white")
                 .style("opacity", 0)
-                .style("pointer-events", "none")
+                .style("cursor", "default")
                 .text(function (d) { return (d.answerCount > 0 ? Math.round(answersPercentageJson[d.answerId]) + "%" : ""); })
                 .transition().duration(1500)
                     .delay(1500)
@@ -465,7 +558,7 @@
         svg.selectAll(".barGroup").data(receivedData)
             .select("text")
             .transition().duration(1500)
-            .attr("y", function (d) { return newYaxis(d.answerCount - (submissionCount / 7)); })
+            .attr("y", function (d) { return newYaxis(d.answerCount - (submissionCount / 10)); })
             .text(function (d) { return (d.answerCount > 0 ? Math.round(answersPercentageJson[d.answerId]) + "%" : ""); });
     };
 
@@ -569,12 +662,13 @@
             .attr("y", function (d) { return y(0); })
             .attr("width", xSubgroup.bandwidth())
             .attr("height", function (d) { return height - y(0); })
-            .attr("fill", function (d) { return colorFill(d.key); })
+            .attr("fill", function (d) { return colorBorder(d.key); })
+            .attr("fill-opacity", .5)
             .style("stroke", function (d) { return colorBorder(d.key); })
             .style("stroke-width", 1)
-            .on("mouseover", function (d) { return tooltip.style("visibility", "visible").html(d.key + ": " + d.value + "<hr class='my-1' />" + d.percentage.toFixed(2) + "%"); })
+            .on("mouseover", function (d) { d3.select(this).style("fill-opacity", .7).style("stroke-width", 2); return tooltip.style("visibility", "visible").html(d.key + ": " + d.value + "<hr class='my-1' />" + d.percentage.toFixed(2) + "%"); })
             .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
-            .on("mouseout", function (d) { return tooltip.style("visibility", "hidden").html(""); })
+            .on("mouseout", function (d) { d3.select(this).style("fill-opacity", .5).style("stroke-width", 1); return tooltip.style("visibility", "hidden").html(""); })
             .transition().duration(1500)
                 .attr("y", function (d) { return y(d.value); })
                 .attr("height", function (d) { return height - y(d.value); });
@@ -789,6 +883,151 @@
         });
     }
 
+    function createWordCloud(questionId, receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChart" + questionId).append("svg")
+            .attr("class", "border border-primary rounded")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Create a scale for text size
+        var textSize = d3.scaleLinear()
+            .domain([1, 30])  // What's in the data
+            .range([8, 40])  // Size in pixel
+
+        // create a tooltip
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "font-weight-bold text-dark px-2 py-2")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "lavender")
+            .style("border", "1px solid gray")
+            .style("border-radius", "12px")
+            .style("text-align", "center")
+            .style("visibility", "hidden")
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); });
+
+        var minAngleValue = -50;
+        var maxAngleValue = 50;
+
+        // Constructs a new cloud layout instance. It run an algorithm to find the position of words that suits your requirements
+        var layout = d3.layout.cloud()
+            .size([width, height])
+            .words(receivedData.map(function (d) { return { text: d.text, size: textSize(d.size), answerCount: d.size, answerPercentage: d.percentage }; }))
+            .padding(20)
+            .rotate(function (d) { return Math.floor(Math.random() * (maxAngleValue - minAngleValue + 1)) + minAngleValue; })
+            .fontSize(function (d) { return textSize(d.size); })
+            .on("end", function (words) {
+                // This function takes the output of 'layout' above and draw the words
+                // Better not to touch it. To change parameters, play with the 'layout' variable above
+                svg
+                    .append("g")
+                    .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                    .selectAll("text")
+                    .data(words)
+                    .enter().append("text")
+                    .on("mouseover", function (d) { d3.select(this).style("fill-opacity", 1.0); return tooltip.style("visibility", "visible").html(d.text + ": " + d.answerCount + "<hr class='my-1' />" + d.answerPercentage.toFixed(2) + "%"); })
+                    .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
+                    .on("mouseout", function (d) { d3.select(this).style("fill-opacity", .6); return tooltip.style("visibility", "hidden").html(""); })
+                    .style("font-size", function (d) { return textSize(d.size); })
+                    .style("fill", function (d) { return generateRandomColorHsl(); })
+                    .attr("fill-opacity", .6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "impact")
+                    .style("cursor", "default")
+                    .text(function (d) { return d.text; })
+                    .transition().duration(1000)
+                    .attr("transform", function (d) { return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")"; });    
+            });
+        layout.start();
+    }
+
+    function updateWordCloud(questionId, receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // Select svg g
+        var svg = d3.select("#divChart" + questionId).select("g");
+
+        // Create a scale for text size
+        var textSize = d3.scaleLinear()
+            .domain([1, 30])  // What's in the data
+            .range([8, 40])  // Size in pixel
+
+        // create a tooltip
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "font-weight-bold text-dark px-2 py-2")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "lavender")
+            .style("border", "1px solid gray")
+            .style("border-radius", "12px")
+            .style("text-align", "center")
+            .style("visibility", "hidden")
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); });
+
+        var minAngleValue = -50;
+        var maxAngleValue = 50;
+        
+        // Constructs a new cloud layout instance. It run an algorithm to find the position of words that suits your requirements
+        var layout = d3.layout.cloud()
+            .size([width, height])
+            .words(receivedData.map(function (d) { return { text: d.text, size: textSize(d.size), answerCount: d.size, answerPercentage: d.percentage }; }))
+            .padding(20)
+            .rotate(function (d) { return Math.floor(Math.random() * (maxAngleValue - minAngleValue + 1)) + minAngleValue; })
+            .fontSize(function (d) { return textSize(d.size); })
+            .on("end", function (words) {
+                svg.select("g").selectAll("text")
+                    .transition().duration(1000)
+                    .attr("transform", function (d) { return "translate(" + [0, 0] + ")rotate(" + 0 + ")"; })
+                    .remove();
+
+                setTimeout(function () { svg.select("g").remove(); }, 1000);
+                
+
+                svg
+                    .append("g")
+                    .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+                    .selectAll("text")
+                    .data(words)
+                    .enter().append("text")
+                    .on("mouseover", function (d) { d3.select(this).style("fill-opacity", 1.0); return tooltip.style("visibility", "visible").html(d.text + ": " + d.answerCount + "<hr class='my-1' />" + d.answerPercentage.toFixed(2) + "%"); })
+                    .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
+                    .on("mouseout", function (d) { d3.select(this).style("fill-opacity", .6); return tooltip.style("visibility", "hidden").html(""); })
+                    .style("font-size", function (d) { return textSize(d.size); })
+                    .style("fill", function (d) { return generateRandomColorHsl(); })
+                    .attr("fill-opacity", 0)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "impact")
+                    .style("cursor", "default")
+                    .text(function (d) { return d.text; })
+                    .transition().duration(1000).delay(300)
+                    .attr("fill-opacity", .6)
+                    .transition().duration(1000)
+                    .attr("transform", function (d) { return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")"; });
+            });
+        layout.start();
+
+        console.log("Update word cloud");
+    }
+
+    function createNumbersChart(questionId, receivedData, chartDimensions) {
+        alert("Numbers chart");
+    }
+
     function changeChartType() {
         resetIntervalTimer();
 
@@ -831,6 +1070,28 @@
         }
     }
 
+    function containsOnlyNumbers(questionId) {
+        var customAnswersObj = customAnswerCountJson[questionId];
+
+        customAnswersObj = {
+            "3": 3,
+            "2": 5,
+            "5": 2,
+            "6": 5,
+            "12": 2
+        };
+
+        for (var key in customAnswersObj) {
+            if (customAnswersObj.hasOwnProperty(key)) {
+                if (isNaN(key)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     function resetIntervalTimer() {
         clearInterval(updateInterval);
         updateInterval = setInterval(updateResults, 5000);
@@ -849,6 +1110,11 @@
                 try {
                     // Try converting string to js object
                     dataJson = JSON.parse(data);
+
+                    var mustUpdateWordCloud = false;
+                    if (!(JSON.stringify(customAnswerCountJson) === JSON.stringify(dataJson["customAnswerMapJson"]))) {
+                        mustUpdateWordCloud = true;
+                    }
 
                     // Update js objects
                     submissionCount = dataJson["submissionCount"];
@@ -884,6 +1150,11 @@
                                 } else {
                                     updateBarChartCompare(questionId, gatherDataCompare(questionId, comparedQuestionId), globalChartDimensions);
                                 }
+                            }
+                        }
+                        else {
+                            if (mustUpdateWordCloud) {
+                                updateWordCloud(questionId, gatherDataWordCloud(questionId), globalChartDimensions);
                             }
                         }
                     }
