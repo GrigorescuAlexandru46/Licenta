@@ -412,7 +412,31 @@
     }
 
     function gatherDataNumbersChart(questionId) {
+        var data = [];
+        var minValue = 0;
+        var maxValue = 0;
 
+        customAnswersObj = customAnswerCountJson[questionId];
+
+        for (var answer in customAnswersObj) {
+            if (customAnswersObj.hasOwnProperty(answer)) {
+                var answerCount = customAnswersObj[answer];
+
+                for (var i = 0; i < answerCount; i++) {
+                    var answerValue = Number(answer);
+
+                    if (answerValue < minValue) { minValue = answerValue; }
+                    if (answerValue > maxValue) { maxValue = answerValue; }
+
+                    data.push({ value: answerValue });
+                }
+            }
+        }
+
+        data.minValue = minValue;
+        data.maxValue = maxValue;
+
+        return data;
     }
 
     function calculateTicks(max) {
@@ -1025,7 +1049,200 @@
     }
 
     function createNumbersChart(questionId, receivedData, chartDimensions) {
-        alert("Numbers chart");
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChart" + questionId)
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        // add the x Axis
+        var x = d3.scaleLinear()
+            .domain([receivedData.minValue, receivedData.maxValue + 5])
+            .range([0, width]);
+        svg.append("g")
+            .attr("class", "x-axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        // add the X gridlines
+        svg.append("g")
+            .attr("class", "grid")
+            .attr("opacity", ".2")
+            .attr("transform", "translate(0," + height + ")")
+            .call(make_x_gridlines(x)
+                .tickSize(-height)
+                .tickFormat("")
+            )
+
+        // Functions to compute density
+        function kernelDensityEstimator(kernel, X) {
+            return function (V) {
+                return X.map(function (x) {
+                    return [x, d3.mean(V, function (v) { return kernel(x - v); })];
+                });
+            };
+        }
+        function kernelEpanechnikov(k) {
+            return function (v) {
+                return Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
+            };
+        }
+
+        // gridlines in y axis function
+        function make_y_gridlines(y) {
+            return d3.axisLeft(y);
+        }
+
+        // gridlines in x axis function
+        function make_x_gridlines(x) {
+            return d3.axisBottom(x)
+        }
+
+        // Compute kernel density estimation
+        var kde = kernelDensityEstimator(kernelEpanechnikov(1), x.ticks(100))
+        var density = kde(receivedData.map(function (d) { return d.value; }))
+        var maxDensity = Math.max.apply(Math, density.map(function (elem) { return elem[1]; }));
+
+        // add the y Axis
+        var y = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, maxDensity]);
+        svg.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y));
+
+        // add the Y gridlines
+        svg.append("g")
+            .attr("class", "grid")
+            .attr("opacity", ".2")
+            .call(make_y_gridlines(y)
+                .tickSize(-width)
+                .tickFormat("")
+            )
+
+        // Plot the area
+        svg.append("path")
+            .attr("class", "mypath")
+            .datum(density)
+            .attr("fill", "#69b3a2")
+            .attr("opacity", ".8")
+            .attr("stroke", "#000")
+            .attr("stroke-width", 1)
+            .attr("stroke-linejoin", "round")
+            .attr("d", d3.line()
+                .curve(d3.curveBasis)
+                .x(function (d) { return x(d[0]); })
+                .y(function (d) { return y(0); })
+            )
+            .transition().duration(1500)
+            .attr("d", d3.line()
+                .curve(d3.curveBasis)
+                .x(function (d) { return x(d[0]); })
+                .y(function (d) { return y(d[1]); })
+            );
+    }
+
+    function updateNumbersChart(questionId, receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChart" + questionId).select("g");
+
+        // Select the outdated Y axis
+        var outdatedXaxis = svg.select(".x-axis");
+        var outdatedYaxis = svg.select(".y-axis");
+
+        // Create new X axis
+        var newXaxis = d3.scaleLinear()
+            .range([0, width])
+            .domain([receivedData.minValue, receivedData.maxValue + 5]);
+
+        // Update X axis
+        outdatedXaxis
+            .transition().duration(1500)
+            .call(d3.axisBottom(newXaxis));
+
+        // Delete outdated grids
+        svg.selectAll(".grid").remove();
+
+        // Functions to compute density
+        function kernelDensityEstimator(kernel, X) {
+            return function (V) {
+                return X.map(function (x) {
+                    return [x, d3.mean(V, function (v) { return kernel(x - v); })];
+                });
+            };
+        }
+        function kernelEpanechnikov(k) {
+            return function (v) {
+                return Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
+            };
+        }
+
+        // gridlines in y axis function
+        function make_y_gridlines(y) {
+            return d3.axisLeft(y);
+        }
+
+        // gridlines in x axis function
+        function make_x_gridlines(x) {
+            return d3.axisBottom(x)
+        }
+
+        // Compute kernel density estimation
+        var kde = kernelDensityEstimator(kernelEpanechnikov(1), newXaxis.ticks(100))
+        var density = kde(receivedData.map(function (d) { return d.value; }))
+        var maxDensity = Math.max.apply(Math, density.map(function (elem) { return elem[1]; }));
+
+        // Create new Y axis
+        var newYaxis = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, maxDensity]);
+
+        // Update Y axis
+        outdatedYaxis
+            .transition().duration(1500)
+            .call(d3.axisLeft(newYaxis));
+
+        // add the Y gridlines
+        svg.append("g")
+            .attr("class", "grid")
+            .call(make_y_gridlines(newYaxis)
+                .tickSize(-width)
+                .tickFormat("")
+            )
+            .attr("opacity", ".2");
+
+        // add the X gridlines
+        svg.append("g")
+            .attr("class", "grid")
+            .attr("transform", "translate(0," + height + ")")
+            .call(make_x_gridlines(newXaxis)
+                .tickSize(-height)
+                .tickFormat("")
+            )
+            .attr("opacity", ".2");
+
+        // Plot the area
+        svg.select(".mypath")
+            .datum(density)
+            .transition().duration(1500)
+            .attr("d", d3.line()
+                .curve(d3.curveBasis)
+                .x(function (d) { return newXaxis(d[0]); })
+                .y(function (d) { return newYaxis(d[1]); })
+            );
     }
 
     function changeChartType() {
@@ -1073,20 +1290,17 @@
     function containsOnlyNumbers(questionId) {
         var customAnswersObj = customAnswerCountJson[questionId];
 
-        customAnswersObj = {
-            "3": 3,
-            "2": 5,
-            "5": 2,
-            "6": 5,
-            "12": 2
-        };
-
         for (var key in customAnswersObj) {
             if (customAnswersObj.hasOwnProperty(key)) {
                 if (isNaN(key)) {
                     return false;
                 }
             }
+        }
+
+        // If there are no custom answers, we will treat it as a word cloud
+        if (Object.keys(customAnswersObj).length == 0) {
+            return false;
         }
 
         return true;
@@ -1153,8 +1367,13 @@
                             }
                         }
                         else {
-                            if (mustUpdateWordCloud) {
-                                updateWordCloud(questionId, gatherDataWordCloud(questionId), globalChartDimensions);
+                            if (containsOnlyNumbers(questionId)) {
+                                updateNumbersChart(questionId, gatherDataNumbersChart(questionId), globalChartDimensions);
+                            }
+                            else {
+                                if (mustUpdateWordCloud) {
+                                    updateWordCloud(questionId, gatherDataWordCloud(questionId), globalChartDimensions);
+                                }
                             }
                         }
                     }
