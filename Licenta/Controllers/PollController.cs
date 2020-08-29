@@ -868,6 +868,89 @@ namespace Licenta.Controllers
                 answerCombinationPercentageMap.Add(combination, percentage);
             }
 
+            Dictionary<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> answerObjectsMapChart = new Dictionary<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>>();
+            foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
+            {
+                Submission submission = entry.Value.ElementAt(0);
+                double latitude = Math.Round(submission.Latitude, 3);
+                double longitude = Math.Round(submission.Longitude, 3);
+
+                Tuple<double, double> centerCoords = null;
+                bool foundCenter = false;
+                foreach (KeyValuePair<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> coordsEntry in answerObjectsMapChart)
+                {
+                    if (Math.Abs(coordsEntry.Key.Item1 - latitude) <= 4 && Math.Abs(coordsEntry.Key.Item2 - longitude) <= 4)
+                    {
+                        centerCoords = new Tuple<double, double>(coordsEntry.Key.Item1, coordsEntry.Key.Item2);
+                        foundCenter = true;
+                        break;
+                    }
+                }
+
+                // if we didnt find anything valid in the foreach above, create new center
+                if (foundCenter == false)
+                {
+                    centerCoords = new Tuple<double, double>(latitude, longitude);
+                    answerObjectsMapChart.Add(centerCoords, new Dictionary<int, Dictionary<string, Dictionary<string, object>>>());
+                }
+
+                Dictionary<int, Dictionary<string, Dictionary<string, object>>> innerDictionary = answerObjectsMapChart[centerCoords];
+                foreach (Submission sub in entry.Value)
+                {
+                    if (sub.QuestionType != 3)
+                    {
+                        if (innerDictionary.ContainsKey(sub.Answer.QuestionId))
+                        {
+                            Dictionary<string, Dictionary<string, object>> extraInnerDictionary = innerDictionary[sub.Answer.QuestionId];
+
+                            if (extraInnerDictionary.ContainsKey(sub.Text))
+                            {
+                                extraInnerDictionary[sub.Text]["value"] = (int)extraInnerDictionary[sub.Text]["value"] + 1;
+                                extraInnerDictionary[sub.Text]["country"] = sub.Country;
+                                extraInnerDictionary[sub.Text]["city"] = sub.City;
+                            }
+                            else
+                            {
+                                extraInnerDictionary.Add(sub.Text, new Dictionary<string, object>());
+                                extraInnerDictionary[sub.Text]["value"] = 1;
+                                extraInnerDictionary[sub.Text]["country"] = sub.Country;
+                                extraInnerDictionary[sub.Text]["city"] = sub.City;
+                            }
+                        }
+                        else
+                        {
+                            Dictionary<string, Dictionary<string, object>> extraInnerDictionary = new Dictionary<string, Dictionary<string, object>>();
+                            extraInnerDictionary.Add(sub.Text, new Dictionary<string, object>());
+                            extraInnerDictionary[sub.Text]["value"] = 1;
+                            extraInnerDictionary[sub.Text]["country"] = sub.Country;
+                            extraInnerDictionary[sub.Text]["city"] = sub.City;
+
+                            innerDictionary.Add(sub.Answer.QuestionId, extraInnerDictionary);
+                        }
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> entry in answerObjectsMapChart)
+            {
+                foreach (Question question in poll.Questions)
+                {
+                    if (question.QuestionType != 3)
+                    {
+                        foreach (Answer answer in question.Answers)
+                        {
+                            if (!entry.Value[question.QuestionId].ContainsKey(answer.Text))
+                            {
+                                entry.Value[question.QuestionId].Add(answer.Text, new Dictionary<string, object>());
+                                entry.Value[question.QuestionId][answer.Text]["value"] = 0;
+                                entry.Value[question.QuestionId][answer.Text]["country"] = "None";
+                                entry.Value[question.QuestionId][answer.Text]["city"] = "None";
+                            }
+                        }
+                    }
+                }
+            }
+
             // Answers count
             string answerSelectedCountMapJson = "{";
             foreach (KeyValuePair<int, int> entry in answerSelectedCountMap)
@@ -966,6 +1049,51 @@ namespace Licenta.Controllers
             }
             answerCombinationPercentageMapJson += "}";
 
+
+            //Dictionary < Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>> >
+            string answerObjectsMapChartJson = "{";
+            foreach(KeyValuePair<Tuple<double, double>, Dictionary<int, Dictionary<string, Dictionary<string, object>>>> entry in answerObjectsMapChart)
+            {
+                answerObjectsMapChartJson += Surround("(" + entry.Key.Item1 + "," + entry.Key.Item2 + ")") + ": {";
+
+                Dictionary<int, Dictionary<string, Dictionary<string, object>>> innerDictionary = answerObjectsMapChart[entry.Key];
+                foreach (KeyValuePair<int, Dictionary<string, Dictionary<string, object>>> innerEntry in innerDictionary)
+                {
+                    answerObjectsMapChartJson += Surround(innerEntry.Key) + ": {";
+
+                    Dictionary<string, Dictionary<string, object>> extraInnerDictionary = innerDictionary[innerEntry.Key];
+                    foreach (KeyValuePair<string, Dictionary<string, object>> extraInnerEntry in extraInnerDictionary)
+                    {
+                        answerObjectsMapChartJson += Surround(extraInnerEntry.Key) + ": {";
+
+                        Dictionary<string, object> superExtraInnerDictionary = extraInnerDictionary[extraInnerEntry.Key];
+                        answerObjectsMapChartJson += Surround("value") + ": " + superExtraInnerDictionary["value"] + ",";
+                        answerObjectsMapChartJson += Surround("country") + ": " + Surround((string)superExtraInnerDictionary["country"]) + ",";
+                        answerObjectsMapChartJson += Surround("city") + ": " + Surround((string)superExtraInnerDictionary["city"]);
+
+                        answerObjectsMapChartJson += "}";
+                        if (extraInnerEntry.Key != extraInnerDictionary.Last().Key)
+                        {
+                            answerObjectsMapChartJson += ",";
+                        }
+                    }
+
+                    answerObjectsMapChartJson += "}";
+                    if (innerEntry.Key != innerDictionary.Last().Key)
+                    {
+                        answerObjectsMapChartJson += ",";
+                    }
+                }
+
+                answerObjectsMapChartJson += "}";
+                if (entry.Key != answerObjectsMapChart.Last().Key)
+                {
+                    answerObjectsMapChartJson += ",";
+                }
+            }
+
+            answerObjectsMapChartJson += "}";
+
             try
             {
                 // Combine all jsons into one
@@ -976,7 +1104,8 @@ namespace Licenta.Controllers
                                 Surround("customAnswerMapJson") + ": " + customAnswerMapJson + ", " +
                                 Surround("answerPercentageMapJson") + ": " + answerPercentageMapJson + ", " +
                                 Surround("customAnswerPercentageMapJson") + ": " + customAnswerPercentageMapJson + ", " +
-                                Surround("answerCombinationPercentageMapJson") + ": " + answerCombinationPercentageMapJson +
+                                Surround("answerCombinationPercentageMapJson") + ": " + answerCombinationPercentageMapJson + ", " +
+                                Surround("answerObjectsMapChartJson") + ": " + answerObjectsMapChartJson +
                               "}";
 
                 return Json(json);
