@@ -694,6 +694,23 @@ namespace Licenta.Controllers
                     }
                 }
 
+                int submissionsCounter = 0;
+                Dictionary<string, int> submissionDatesMap = new Dictionary<string, int>();
+                foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
+                {
+                    string submitDateString = entry.Value.First().SubmitDate.ToString("yyyy-MM-dd");
+                    submissionsCounter++;
+
+                    if (submissionDatesMap.ContainsKey(submitDateString))
+                    {
+                        submissionDatesMap[submitDateString] = submissionsCounter;
+                    }
+                    else
+                    {
+                        submissionDatesMap.Add(submitDateString, submissionsCounter);
+                    }   
+                }
+
                 ViewBag.SubmissionCount = submissionCount;
                 ViewBag.AnswerSelectedCountMap = answerSelectedCountMap;
                 ViewBag.SubmissionList = submissionList;
@@ -703,7 +720,7 @@ namespace Licenta.Controllers
                 ViewBag.CustomAnswerPercentageMap = customAnswerPercentageMap;
                 ViewBag.AnswerCombinationPercentageMap = answerCombinationPercentageMap;
                 ViewBag.AnswerObjectsMapChart = answerObjectsMapChart;
-
+                ViewBag.SubmissionDatesMap = submissionDatesMap;
 
                 return View(poll);
             }
@@ -951,6 +968,35 @@ namespace Licenta.Controllers
                 }
             }
 
+            int submissionsCounter = 0;
+            Dictionary<string, int> submissionDatesMap = new Dictionary<string, int>();
+            foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
+            {
+                string submitDateString = entry.Value.First().SubmitDate.ToString("yyyy-MM-dd");
+                submissionsCounter++;
+
+                if (submissionDatesMap.ContainsKey(submitDateString))
+                {
+                    submissionDatesMap[submitDateString] = submissionsCounter;
+                }
+                else
+                {
+                    submissionDatesMap.Add(submitDateString, submissionsCounter);
+                }
+            }
+
+            string submissionDatesMapJson = "{";
+            foreach (KeyValuePair<string, int> entry in submissionDatesMap)
+            {
+                submissionDatesMapJson += Surround(entry.Key) + ": " + entry.Value;
+
+                if (entry.Key != submissionDatesMap.Last().Key)
+                {
+                    submissionDatesMapJson += ", ";
+                }
+            }
+            submissionDatesMapJson += "}";
+
             // Answers count
             string answerSelectedCountMapJson = "{";
             foreach (KeyValuePair<int, int> entry in answerSelectedCountMap)
@@ -1105,7 +1151,8 @@ namespace Licenta.Controllers
                                 Surround("answerPercentageMapJson") + ": " + answerPercentageMapJson + ", " +
                                 Surround("customAnswerPercentageMapJson") + ": " + customAnswerPercentageMapJson + ", " +
                                 Surround("answerCombinationPercentageMapJson") + ": " + answerCombinationPercentageMapJson + ", " +
-                                Surround("answerObjectsMapChartJson") + ": " + answerObjectsMapChartJson +
+                                Surround("answerObjectsMapChartJson") + ": " + answerObjectsMapChartJson + ", " +
+                                Surround("submissionDatesMapJson") + ": " + submissionDatesMapJson +
                               "}";
 
                 return Json(json);

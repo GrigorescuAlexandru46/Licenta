@@ -10,6 +10,7 @@
 
 <script>
     var submissionCount = @ViewBag.SubmissionCount;
+    var pollCreationDate = "@(Model.CreationDate.ToString("yyyy-MM-dd"))";
 
     var questionsJson = {
         @foreach (var question in Model.Questions)
@@ -124,6 +125,13 @@
                 <text>},</text>
             }
             <text>},</text>
+        }
+    };
+
+    var submissionDatesJson = {
+        @foreach (KeyValuePair<string, int> entry in ViewBag.SubmissionDatesMap)
+        {
+            <text>"@(entry.Key)": @(entry.Value),</text>
         }
     };
 </script>
@@ -299,7 +307,10 @@
         globalHeight = tempDivChart.offsetHeight - globalMargin.top - globalMargin.bottom;
         globalChartDimensions = { "margin": globalMargin, "width": globalWidth, "height": globalHeight };
 
-        // Create all charts
+        // Create general chart
+        createGeneralChart(gatherDataGeneralChart(), globalChartDimensions);
+
+        // Create questions charts
         for (var questionId in questionsJson) {
             if (questionsJson.hasOwnProperty(questionId)) {
                 // Create chart
@@ -394,6 +405,36 @@
         return data;
     }
 
+    function gatherDataPie(questionId) {
+        var data = {};
+
+        var pieData = {};
+        var extraData = {};
+        var labels = [];
+
+        var questionObj = questionsJson[questionId];
+
+        questionObj.forEach(function (answerId) {
+            var answerText = answersJson[answerId];
+            var answerCount = answerCountJson[answerId];
+            var answerPercentage = answersPercentageJson[answerId];
+
+            pieData[answerText] = answerCount;
+
+            extraData[answerText] = {};
+            extraData[answerText].answerId = answerId;
+            extraData[answerText].answerPercentage = answerPercentage;
+
+            labels.push(answersJson[answerId]);
+        });
+
+        data.pieData = pieData;
+        data.extraData = extraData;
+        data.labels = labels;
+
+        return data;
+    }
+
     function gatherDataWordCloud(questionId) {
         var data = [];
 
@@ -437,6 +478,46 @@
         data.maxValue = maxValue;
 
         return data;
+    }
+
+    function gatherDataGeneralChart() {
+        var data = [];
+        var minDate = new Date(8640000000000000);
+        var maxDate = new Date(-8640000000000000);
+
+        Object.keys(submissionDatesJson).forEach(function (subDate) {
+            var subCount = submissionDatesJson[subDate];
+            var subDateObj = new Date(subDate);
+
+            if (subDateObj < minDate) {
+                minDate = subDateObj;
+            }
+
+            if (subDateObj > maxDate) {
+                maxDate = subDateObj;
+            }
+
+            data.push({
+                date: d3.timeParse("%Y-%m-%d")(subDate),
+                value: subCount
+            });
+        });
+
+        var domainMinDate = new Date(pollCreationDate);
+        var domainMaxDate = new Date(maxDate);
+
+        data.minDate = minDate;
+        data.maxDate = maxDate;
+        data.domainMinDate = domainMinDate;
+        data.domainMaxDate = addDays(domainMaxDate, 3);
+
+        return data;
+    }
+
+    function addDays(date, days) {
+        var result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
     }
 
     function calculateTicks(max) {
@@ -982,6 +1063,142 @@
         });
     }
 
+    function createPieChart(questionId, receivedData, chartDimensions) {
+        var pieData = receivedData.pieData;
+        var extraData = receivedData.extraData;
+        var labels = receivedData.labels;
+        
+        // Set dimensions
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+        var radius = Math.min(width, height) / 2 - 10;
+
+        // append the svg object to the div called 'my_dataviz'
+        var svg = d3.select("#divChart" + questionId)
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("class", "chartGroup")
+            .attr("transform", "translate(" + width / 3 + "," + height / 2 + ")");
+
+        // create a tooltip
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "font-weight-bold text-dark px-2 py-2")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "lavender")
+            .style("border", "1px solid gray")
+            .style("border-radius", "12px")
+            .style("text-align", "center")
+            .style("visibility", "hidden")
+            .style("visibility", "hidden")
+            .style("visibility", "hidden")
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); });
+
+
+        // Create color palette
+        var color = d3.scaleOrdinal()
+            .domain(labels)
+            .range(["rgb(255, 0, 0, 1.0)", "rgb(0, 102, 255, 1.0)", "rgb(51, 204, 51, 1.0)", "rgb(255, 204, 0, 1.0)", "rgb(153, 51, 255, 1.0)", "rgb(102, 255, 255, 1.0)", "rgb(204, 153, 255, 1.0)", "rgb(0, 102, 102, 1.0)", "rgb(153, 204, 0, 1.0)", "rgb(102, 51, 0, 1.0)", "rgb(255, 51, 204, 1.0)", "rgb(153, 204, 255, 1.0)", "rgb(153, 255, 153, 1.0)", "rgb(204, 51, 0, 1.0)", "rgb(0, 0, 102, 1.0)", "rgb(153, 102, 0, 1.0)", "rgb(0, 102, 34, 1.0)", "rgb(102, 102, 153, 1.0)", "rgb(255, 255, 77, 1.0)", "rgb(255, 153, 255, 1.0)"]);
+        
+        // Compute the position of each group on the pie:
+        var pie = d3.pie()
+            .value(function (d) { return d.value; })
+        var data_ready = pie(d3.entries(pieData))
+
+        // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+        svg
+            .selectAll('whatever')
+            .data(data_ready)
+            .enter()
+            .append('path')
+            .attr('d', d3.arc()
+                .innerRadius(0)
+                .outerRadius(radius)
+            )
+            .on("mouseover", function (d) { d3.select(this).style("fill-opacity", 1).style("stroke-width", 2); return tooltip.style("visibility", "visible").html(d.data.key + ": " + d.value + "<hr class='my-1' />" + extraData[d.data.key].answerPercentage.toFixed(2) + "%"); })
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
+            .on("mouseout", function (d) { d3.select(this).style("fill-opacity", .5).style("stroke-width", 1); return tooltip.style("visibility", "hidden").html(""); })
+            .attr('fill', function (d) { return color(d.data.key); })
+            .attr("stroke", "black")
+            .style("stroke-width", 1)
+            .style("fill-opacity", 0.5)
+            .style("opacity", 0)
+            .transition().duration(1500)
+            .style("opacity", 1);
+            
+
+        var legendX = width - width / 4;
+        var legendY = 0;
+
+        // Legend
+        var legendGroup = d3.select("#divChart" + questionId).select("svg")
+            .append("g")
+            .attr("class", "legendGroup")
+            .attr("transform", "translate(" + (legendX) + ", " + legendY + ")");
+
+        legendGroup
+            .append("g")
+            .attr("class", "left")
+            .selectAll("mydots")
+            .data(labels)
+            .enter()
+            .append("circle")
+            .attr("cx", 0)
+            .attr("cy", function (d, i) { return 100 + i * 45; })
+            .attr("r", 7)
+            .style("fill-opacity", 0.5)
+            .style("fill", function (d) { return color(d) });
+
+        legendGroup
+            .append("g")
+            .attr("class", "right")
+            .attr("transform", "translate(" + 15 + ", " + legendY + ")")
+            .selectAll("myLabels")
+            .data(labels)
+            .enter()
+            .append("text")
+            .attr("x", 0)
+            .attr("y", function (d, i) { return 100 + i * 45; })
+            .style("fill-opacity", 0.5)
+            .style("fill", function (d) { return color(d) })
+            .text(function (d) { return d })
+            .attr("text-anchor", "left")
+            .style("alignment-baseline", "middle")
+            .attr("font-family", "cursive")
+            .style("font-size", "1.3vw");
+    }
+
+    function updatePieChart(questionId, receivedData, chartDimensions) {
+        var pieData = receivedData.pieData;
+
+        // Set dimensions
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+        var radius = Math.min(width, height) / 2 - 10;
+
+        // Select the svg g object
+        var svg = d3.select("#divChart" + questionId).select(".chartGroup")
+
+        // Compute the position of each group on the pie:
+        var pie = d3.pie()
+            .value(function (d) { return d.value; })
+        var data_ready = pie(d3.entries(pieData))
+
+        // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+        svg
+            .selectAll("path")
+            .data(data_ready)
+            .transition().duration(1500)
+            .attr('d', d3.arc()
+                .innerRadius(0)
+                .outerRadius(radius)
+            )
+    }
+
     function createWordCloud(questionId, receivedData, chartDimensions) {
         // Set dimensions
         var margin = chartDimensions["margin"];
@@ -1320,6 +1537,231 @@
             );
     }
 
+    function createGeneralChart(receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChartGeneral")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        // create a tooltip
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "font-weight-bold text-dark px-2 py-2")
+            .attr("id", "tooltipGeneralChart")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("background", "lavender")
+            .style("border", "1px solid gray")
+            .style("border-radius", "12px")
+            .style("text-align", "center")
+            .style("visibility", "hidden")
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); });
+
+        // Add X axis --> it is a date format
+        var x = d3.scaleTime()
+            .domain([receivedData.domainMinDate, receivedData.domainMaxDate])
+            .range([0, width]);
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+            .domain([0, submissionCount])
+            .range([height, 0]);
+        svg.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y)
+                .ticks(calculateTicks(submissionCount))
+                .tickFormat(d3.format("d")));
+
+        // Add the line
+        svg.append("path")
+            .attr("class", "lineClass")
+            .datum(receivedData)
+            .attr("fill", "none")
+            .attr("stroke", "#69b3a2")
+            .attr("stroke-width", 2.5)
+            .attr("d", d3.line()
+                .x(function (d) { return x(d.date) })
+                .y(function (d) { return y(0) })
+            )
+            .transition().duration(1500)
+            .attr("d", d3.line()
+                .x(function (d) { return x(d.date) })
+                .y(function (d) { return y(d.value) })
+        );
+
+        // Date options
+        var options = { year: 'numeric', month: 'short', day: 'numeric' };
+
+        // Add the points
+        svg
+            .append("g")
+            .attr("class", "lineCircles")
+            .selectAll("dot")
+            .data(receivedData)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return x(d.date) })
+            .attr("cy", function (d) { return y(d.value) })
+            .attr("r", 5)
+            .attr("fill", "#69b3a2")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .on("mouseover", function (d) { d3.select(this).attr("r", 8).style("stroke-width", 2); return tooltip.style("visibility", "visible").html("Submissions: " + d.value + "<hr class='my-1' />" + d.date.toLocaleDateString('en-GB', options)); })
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
+            .on("mouseout", function (d) { d3.select(this).attr("r", 5).style("stroke-width", 1); return tooltip.style("visibility", "hidden").html(""); })
+            .style("opacity", 0)
+            .transition().duration(1500)
+            .style("opacity", 1)
+            .delay(1000);
+    }
+
+    function updateGeneralChart(receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChartGeneral").select("svg").select("g");
+
+        // Select the outdated Y axis
+        var outdatedYaxis = svg.select(".y-axis");
+
+        // Create new Y axis
+        var newYaxis = d3.scaleLinear()
+            .domain([0, submissionCount])
+            .range([height, 0]);
+
+        // Update Y axis
+        outdatedYaxis
+            .transition().duration(1500)
+            .call(d3.axisLeft(newYaxis)
+                .ticks(calculateTicks(submissionCount))
+                .tickFormat(d3.format("d")));
+
+        // Add X axis --> it is a date format
+        var x = d3.scaleTime()
+            .domain([receivedData.domainMinDate, receivedData.domainMaxDate])
+            .range([0, width]);
+
+        // create a tooltip
+        var tooltip = d3.select("#tooltipGeneralChart")
+
+        // Add the line
+        svg.select(".lineClass")
+            .datum(receivedData)
+            .transition().duration(1500)
+            .attr("d", d3.line()
+                .x(function (d) { return x(d.date) })
+                .y(function (d) { return newYaxis(d.value) })
+            );
+
+        // Edit existing points
+        svg
+            .select(".lineCircles")
+            .selectAll("circle")
+            .data(receivedData)
+            .attr("cx", function (d) { return x(d.date) })
+            .attr("cy", function (d) { return newYaxis(d.value) })
+            .style("opacity", 0)
+            .transition().duration(1500)
+            .style("opacity", 1)
+            .delay(1000);
+
+        // Date options
+        var options = { year: 'numeric', month: 'short', day: 'numeric' };
+
+        // Add new points
+        svg
+            .select(".lineCircles")
+            .selectAll("circle")
+            .data(receivedData)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return x(d.date) })
+            .attr("cy", function (d) { return newYaxis(d.value) })
+            .attr("r", 5)
+            .attr("fill", "#69b3a2")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .on("mouseover", function (d) { d3.select(this).attr("r", 8).style("stroke-width", 2); return tooltip.style("visibility", "visible").html("Submissions: " + d.value + "<hr class='my-1' />" + d.date.toLocaleDateString('en-GB', options)); })
+            .on("mousemove", function () { return tooltip.style("top", (event.pageY - 75) + "px").style("left", (event.pageX) + 5 + "px"); })
+            .on("mouseout", function (d) { d3.select(this).attr("r", 5).style("stroke-width", 1); return tooltip.style("visibility", "hidden").html(""); })
+            .style("opacity", 0)
+            .transition().duration(1500)
+            .style("opacity", 1)
+            .delay(1000);
+    }
+
+    function createGeneralChart2(receivedData, chartDimensions) {
+        // Set dimensions
+        var margin = chartDimensions["margin"];
+        var width = chartDimensions["width"];
+        var height = chartDimensions["height"];
+
+        // append the svg object to the body of the page
+        var svg = d3.select("#divChartGeneral")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        // Add X axis --> it is a date format
+        var x = d3.scaleTime()
+            .domain([receivedData.domainMinDate, receivedData.domainMaxDate])
+            .range([0, width]);
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+            .domain([0, 22])
+            .range([height, 0]);
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        console.log(receivedData);
+
+        // Add the line
+        svg.append("path")
+            .datum(receivedData)
+            .attr("fill", "none")
+            .attr("stroke", "#69b3a2")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function (d) { return x(d.date) })
+                .y(function (d) { return y(d.value) })
+            );
+
+        // Add the points
+        svg
+            .append("g")
+            .selectAll("dot")
+            .data(receivedData)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return x(d.date) })
+            .attr("cy", function (d) { return y(d.value) })
+            .attr("r", 5)
+            .attr("fill", "#69b3a2")
+    }
+
     function changeChartType() {
         resetIntervalTimer();
 
@@ -1343,6 +1785,14 @@
 
             document.getElementById("divCompareQuestion" + questionId).style.display = "none";
             document.getElementById("divSelectLabelMap" + questionId).style.display = "block";
+        }
+
+        if (select.value == "pieChart") {
+            removeChart(questionId);
+            createPieChart(questionId, gatherDataPie(questionId), globalChartDimensions);
+
+            document.getElementById("divCompareQuestion" + questionId).style.display = "none";
+            document.getElementById("divSelectLabelMap" + questionId).style.display = "none";
         }
     }
 
@@ -1405,6 +1855,11 @@
                         mustUpdateWordCloud = true;
                     }
 
+                    var mustUpdateGeneralChart = false;
+                    if (!(JSON.stringify(submissionDatesJson) === JSON.stringify(dataJson["submissionDatesMapJson"]))) {
+                        mustUpdateGeneralChart = true;
+                    }
+
                     // Update js objects
                     submissionCount = dataJson["submissionCount"];
                     answerCountJson = dataJson["answerSelectedCountMapJson"];
@@ -1414,6 +1869,7 @@
                     customAnswersPercentageJson = dataJson["customAnswerPercentageMapJson"];
                     combinationsPercentageJson = dataJson["answerCombinationPercentageMapJson"];
                     answerObjectsMapChartJson = dataJson["answerObjectsMapChartJson"];
+                    submissionDatesJson = dataJson["submissionDatesMapJson"];
                 }
                 catch (err) {
                     if (err instanceof SyntaxError) {
@@ -1426,6 +1882,10 @@
                     return;
                 }
 
+                if (mustUpdateGeneralChart) {
+                    updateGeneralChart(gatherDataGeneralChart(), globalChartDimensions);
+                }
+                
                 // Update each chart
                 for (var questionId in questionsJson) {
                     if (questionsJson.hasOwnProperty(questionId)) {
@@ -1443,6 +1903,9 @@
                             }
                             if (chartType == "mapChart") {
                                 updateMapChart(questionId, gatherDataMap(questionId), globalChartDimensions);
+                            }
+                            if (chartType == "pieChart") {
+                                updatePieChart(questionId, gatherDataPie(questionId), globalChartDimensions);
                             }
                         }
                         else {
@@ -1471,6 +1934,20 @@
 <br />
 <h1 class="text-center display-3 font-weight-bold">Results</h1>
 <hr />
+
+<div class="jumbotron">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center font-weight-bold cut-text">Submissions</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="divChartGeneral"></div>
+        </div>
+    </div>
+</div>
 
 @foreach (var question in Model.Questions)
 {
@@ -1511,10 +1988,8 @@
                     <span class="font-weight-bold">Chart type</span>
                     <select class="form-control" id="selectChartType@(question.QuestionId)" onchange="changeChartType()">
                         <option value="barChart">Bar chart</option>
+                        <option value="pieChart">Pie chart</option>
                         <option value="mapChart">Map chart</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
                     </select>
                 </div>
                 <div id="divCompareQuestion@(question.QuestionId)" class="col-12 col-md-6">
