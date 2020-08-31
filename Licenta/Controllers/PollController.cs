@@ -698,7 +698,7 @@ namespace Licenta.Controllers
                 Dictionary<string, int> submissionDatesMap = new Dictionary<string, int>();
                 foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
                 {
-                    string submitDateString = entry.Value.First().SubmitDate.ToString("yyyy-MM-dd");
+                    string submitDateString = entry.Value.First().SubmitDate.ToString("yyyy-MM-dd HH:mm");
                     submissionsCounter++;
 
                     if (submissionDatesMap.ContainsKey(submitDateString))
@@ -972,7 +972,7 @@ namespace Licenta.Controllers
             Dictionary<string, int> submissionDatesMap = new Dictionary<string, int>();
             foreach (KeyValuePair<int, List<Submission>> entry in groupedSubmissions)
             {
-                string submitDateString = entry.Value.First().SubmitDate.ToString("yyyy-MM-dd");
+                string submitDateString = entry.Value.First().SubmitDate.ToString("yyyy-MM-dd HH:mm");
                 submissionsCounter++;
 
                 if (submissionDatesMap.ContainsKey(submitDateString))
