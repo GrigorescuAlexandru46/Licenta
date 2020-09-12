@@ -92,6 +92,7 @@ namespace Licenta.Models
 
         [Required]
         [Display(Name = "Age")]
+        [Range(12, 130, ErrorMessage = "The {0} must be between {1} and {2}.")]
         public int Age { get; set; }
 
         [Required]

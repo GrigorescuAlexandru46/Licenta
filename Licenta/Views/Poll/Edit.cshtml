@@ -19,7 +19,7 @@
             foreach(var answer in question.Answers)
             {
                 if (question.QuestionType != 3)
-                { 
+                {
                     <text>onLoadAddAnswerToQuestion(</text> @i <text>);</text>
                 }
                 j++;
@@ -240,7 +240,7 @@
             newListItem.appendChild(newRowWithAddAnswerButtonEmpty);
 
         } else {
-            
+
             // Create the row which contains the remove question button and appends it to the question list item
             var newRowWithRemoveCustomQuestionButtonContent = createRowWithRemoveCustomQuestionButtonContent(questionId);
             newListItem.appendChild(newRowWithRemoveCustomQuestionButtonContent);
@@ -863,6 +863,14 @@
         }
     }
 </script>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-danger mt-3 text-center col-12">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p style="font-size: 1.5rem;">@ViewBag.message</p>
+    </div>
+}
 
 <h2>@ViewBag.Title</h2>
 <hr />

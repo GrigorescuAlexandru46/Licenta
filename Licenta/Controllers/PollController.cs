@@ -69,6 +69,13 @@ namespace Licenta.Controllers
         [HttpPost]
         public ActionResult New(FormCollection form)
         {
+            if (form.Count == 0)
+            {
+                Poll poll = new Poll();
+                ViewBag.Message = "Couldn't create the poll, make sure that all fields are filled";
+                return View(poll);
+            }
+
             try
             {
                 Poll poll = new Poll();
@@ -78,6 +85,43 @@ namespace Licenta.Controllers
                 poll.Description = form["Description"];
                 poll.CreationDate = ConvertStringToDateTime(form["CreationDate"]);
                 poll.OwnerId = GetOwnProfile().ProfileId;
+
+                if (questionCount == 0 || poll.Name == "" || poll.Description == "")
+                {
+                    ViewBag.Message = "Couldn't create the poll, make sure that all fields are filled";
+                    return View(poll);
+                }
+
+                for (int i = 1; i <= questionCount; i++)
+                {
+                    if (form["Question" + i + "_Text"] == "")
+                    {
+                        ViewBag.Message = "Couldn't create the poll, make sure that all fields are filled";
+                        return View(poll);
+                    }
+
+                    int questionType = ConvertStringToInt(form["Question" + i + "_Type"]);
+
+                    if (questionType != 3)
+                    {
+                        int answersCount = ConvertStringToInt(form["Question" + i + "_AnswersCount"]);
+
+                        if (answersCount < 2)
+                        {
+                            ViewBag.Message = "Couldn't create the poll, make sure that all fields are filled";
+                            return View(poll);
+                        }
+
+                        for (int j = 1; j <= answersCount; j++)
+                        {
+                            if (form["Question" + i + "_Answer" + j] == "")
+                            {
+                                ViewBag.Message = "Couldn't create the poll, make sure that all fields are filled";
+                                return View(poll);
+                            }
+                        }
+                    }
+                }
 
                 db.Polls.Add(poll);
                 db.SaveChanges();
@@ -137,20 +181,70 @@ namespace Licenta.Controllers
 
             ViewBag.QuestionsJson = ConvertPollToValidQuestionsJson(poll);
 
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
+
             return View(poll);
         }
 
         [HttpPost]
         public ActionResult Edit(FormCollection form)
         {
+            if (form.Count == 0)
+            {
+                Poll oldPoll = db.Polls.Find(ConvertStringToInt(form["PollId"]));
+                TempData["Message"] = "Couldn't edit the poll, make sure that all fields are filled";
+                return RedirectToAction("Edit", new { id = oldPoll.PollId });
+            }
+
             try
             {
                 Poll oldPoll = db.Polls.Find(ConvertStringToInt(form["PollId"]));
+
+                if (ConvertStringToInt(form["Questions_Count"]) == 0 || form["Name"] == "" || form["Description"] == "")
+                {
+                    TempData["Message"] = "Couldn't edit the poll, make sure that all fields are filled";
+                    return RedirectToAction("Edit", new { id = oldPoll.PollId });
+                }
+
+                int questionCount = ConvertStringToInt(form["Questions_Count"]);
+
+                for (int i = 1; i <= questionCount; i++)
+                {
+                    if (form["Question" + i + "_Text"] == "")
+                    {
+                        TempData["Message"] = "Couldn't edit the poll, make sure that all fields are filled";
+                        return RedirectToAction("Edit", new { id = oldPoll.PollId });
+                    }
+
+                    int questionType = ConvertStringToInt(form["Question" + i + "_Type"]);
+
+                    if (questionType != 3)
+                    {
+                        int answersCount = ConvertStringToInt(form["Question" + i + "_AnswersCount"]);
+
+                        if (answersCount < 2)
+                        {
+                            TempData["Message"] = "Couldn't edit the poll, make sure that all fields are filled";
+                            return RedirectToAction("Edit", new { id = oldPoll.PollId });
+                        }
+
+                        for (int j = 1; j <= answersCount; j++)
+                        {
+                            if (form["Question" + i + "_Answer" + j] == "")
+                            {
+                                TempData["Message"] = "Couldn't edit the poll, make sure that all fields are filled";
+                                return RedirectToAction("Edit", new { id = oldPoll.PollId });
+                            }
+                        }
+                    }
+                }
+
                 db.Polls.Remove(oldPoll);
 
                 Poll newPoll = new Poll();
-
-                int questionCount = ConvertStringToInt(form["Questions_Count"]);
 
                 newPoll.Name = form["Name"];
                 newPoll.Description = form["Description"];
@@ -376,10 +470,13 @@ namespace Licenta.Controllers
                     {
                         int answerCount = ConvertStringToInt(form["Question" + i + "_AnswerCount"]);
 
+                        bool hasCheckedOption = false;
+
                         for (int j = 1; j <= answerCount; j++)
                         {
                             if (form.AllKeys.Contains("Question" + i + "_Answer" + j + "_Checkbox")) // if checked
                             {
+                                hasCheckedOption = true;
                                 Submission submission = new Submission();
 
                                 submission.SubmissionId = submissionId;
@@ -396,9 +493,19 @@ namespace Licenta.Controllers
                                 db.Submissions.Add(submission);
                             }
                         } 
+
+                        if (hasCheckedOption == false)
+                        {
+                            throw new Exception();
+                        }
                     }
                     else if (questionType == 3)
                     {
+                        if (form["Question" + i + "_CustomAnswer"] == "")
+                        {
+                            throw new Exception();
+                        }
+
                         Submission submission = new Submission();
 
                         submission.SubmissionId = submissionId;
@@ -429,7 +536,7 @@ namespace Licenta.Controllers
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                TempData["Message"] = "Error. Answers could not be sent!";
+                TempData["Message"] = "Your results couldn't be sent, make sure that you have picked an answer for each question";
                 return RedirectToAction("Fill", "Poll", new { id = poll.PollId });
             }
         }

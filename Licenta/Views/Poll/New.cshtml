@@ -185,7 +185,7 @@
         newLabel.classList.add("font-weight-bold");
         newLabel.classList.add("control-label");
         newLabel.innerHTML = "Question text:";
-        newRow.appendChild(newLabel);    
+        newRow.appendChild(newLabel);
 
         // Create the textarea and append it to the row
         var newTextarea = document.createElement("textarea");
@@ -344,7 +344,7 @@
         newRow.appendChild(newSelectType);
 
         return newRow;
-    } 
+    }
 
     function createRowWithQuestionTypeTextEmpty(questionId, questionType) {
         // Create the row which contains the div which contains empty space
@@ -359,7 +359,7 @@
         newRow.appendChild(newRowWithSpace);
 
         return newRow;
-    } 
+    }
 
     function createRowWithRemoveCustomQuestionButtonEmpty(questionId) {
         // Create the row which contains the div which contains empty space
@@ -408,7 +408,7 @@
         newTextarea.cols = 20;
         newRow.appendChild(newTextarea);
 
-        // Create the remove answer button and append it to the row 
+        // Create the remove answer button and append it to the row
         var newRemoveButton = document.createElement("a");
         newRemoveButton.classList.add("btn");
         newRemoveButton.classList.add("btn-warning");
@@ -471,7 +471,7 @@
     }
 
     function createSelectForQuestionType(questionId, selectedQuestionType) {
-    
+
         // Create the select tag
         var selectTag = document.createElement("select");
         selectTag.classList.add("col-8");
@@ -620,7 +620,7 @@
         var questionId = extractQuestionId(questionsListItem.id);
 
         questionsList.removeChild(questionsListItem);
-        
+
 
         decreaseQuestionsCount();
 
@@ -690,10 +690,18 @@
         }
     }
 
-    
+
 
 
 </script>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-dismissible alert-danger mt-3 text-center col-12">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <p style="font-size: 1.5rem;">@ViewBag.message</p>
+    </div>
+}
 
 <h2>@ViewBag.Title</h2>
 <hr />
@@ -720,7 +728,7 @@
     <div id="Questions_Data" name="Questions_Data">
         <input id="Questions_Count" name="Questions_Count" type="hidden" value="0" />
     </div>
-    <br/>
+    <br />
 
     <ul class="list-group mt-5">
         <li class="list-group-item bg-light">
